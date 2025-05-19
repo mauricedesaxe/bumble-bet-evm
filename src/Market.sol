@@ -2,13 +2,9 @@
 pragma solidity ^0.8.13;
 
 contract Market {
-    uint256 public number;
+    string public name;
 
-    function setNumber(uint256 newNumber) public {
-        number = newNumber;
-    }
-
-    function increment() public {
-        number++;
+    constructor(string memory _name) {
+        name = _name;
     }
 }

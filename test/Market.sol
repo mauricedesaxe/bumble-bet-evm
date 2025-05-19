@@ -8,17 +8,10 @@ contract MarketTest is Test {
     Market public market;
 
     function setUp() public {
-        market = new Market();
-        market.setNumber(0);
+        market = new Market("Market");
     }
 
-    function test_Increment() public {
-        market.increment();
-        assertEq(market.number(), 1);
-    }
-
-    function testFuzz_SetNumber(uint256 x) public {
-        market.setNumber(x);
-        assertEq(market.number(), x);
+    function test_Market() public view {
+        assertEq(market.name(), "Market");
     }
 }
