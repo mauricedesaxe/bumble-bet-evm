@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import {OrderUtils} from "./OrderUtils.sol";
+
 enum BuySell {
     BUY,
     SELL
@@ -33,6 +35,8 @@ struct Order {
 }
 
 contract Market {
+    using OrderUtils for Order;
+
     string public name;
     address public owner;
 
@@ -104,8 +108,8 @@ contract Market {
             revert("Cannot match non-pending orders");
         }
 
-        if (_isBuySell(order1, order2)) {
-            if (!_isYesYes(order1, order2) && !_isNoNo(order1, order2)) {
+        if (OrderUtils.isBuySell(order1, order2)) {
+            if (!OrderUtils.isYesYes(order1, order2) && !OrderUtils.isNoNo(order1, order2)) {
                 revert("Need to be yes-yes or no-no to match buy-sell orders");
             }
 
@@ -119,8 +123,8 @@ contract Market {
             shares[order2.user][order2.yesNo] -= order2.amount;
 
             // TODO: update order status
-        } else if (_isBuyBuy(order1, order2)) {
-            if (!_isYesNo(order1, order2)) {
+        } else if (OrderUtils.isBuyBuy(order1, order2)) {
+            if (!OrderUtils.isYesNo(order1, order2)) {
                 revert("Need to be yes-no to match buy-buy orders");
             }
 
@@ -136,40 +140,5 @@ contract Market {
         } else {
             revert("Invalid order");
         }
-    }
-
-    function _isBuySell(Order storage order1, Order storage order2) internal view returns (bool) {
-        if (order1.side == BuySell.BUY && order2.side == BuySell.SELL) {
-            return true;
-        }
-        return false;
-    }
-
-    function _isBuyBuy(Order storage order1, Order storage order2) internal view returns (bool) {
-        if (order1.side == BuySell.BUY && order2.side == BuySell.BUY) {
-            return true;
-        }
-        return false;
-    }
-
-    function _isYesYes(Order storage order1, Order storage order2) internal view returns (bool) {
-        if (order1.yesNo == YesNo.YES && order2.yesNo == YesNo.YES) {
-            return true;
-        }
-        return false;
-    }
-
-    function _isNoNo(Order storage order1, Order storage order2) internal view returns (bool) {
-        if (order1.yesNo == YesNo.NO && order2.yesNo == YesNo.NO) {
-            return true;
-        }
-        return false;
-    }
-
-    function _isYesNo(Order storage order1, Order storage order2) internal view returns (bool) {
-        if (order1.yesNo == YesNo.YES && order2.yesNo == YesNo.NO) {
-            return true;
-        }
-        return false;
     }
 }
