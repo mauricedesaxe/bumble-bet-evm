@@ -159,4 +159,22 @@ contract MarketTest is Test {
         vm.expectRevert("Sell is not allowed if you don't own shares");
         market.createOrder(BuySell.SELL, YesNo.NO, LimitMarket.MARKET, amount, price);
     }
+
+    // Test zero amount revert
+    function test_Market_CreateOrder_ZeroAmount() public {
+        vm.expectRevert("Amount must be greater than zero");
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 0, 100);
+    }
+
+    // Test zero price revert
+    function test_Market_CreateOrder_ZeroPrice() public {
+        vm.expectRevert("Price must be greater than zero");
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 0);
+    }
+
+    // Test both zero amount and price (should revert with amount error first)
+    function test_Market_CreateOrder_ZeroAmountAndPrice() public {
+        vm.expectRevert("Amount must be greater than zero");
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 0, 0);
+    }
 }
