@@ -77,4 +77,17 @@ contract Market {
             status: OrderStatus.PENDING
         });
     }
+
+    function cancelOrder(uint256 _orderId) public {
+        Order storage order = orders[msg.sender][_orderId];
+        if (order.user == address(0)) {
+            revert("Order does not exist");
+        }
+
+        if (order.status != OrderStatus.PENDING) {
+            revert("Cannot cancel a non-pending order");
+        }
+
+        order.status = OrderStatus.CANCELLED;
+    }
 }
