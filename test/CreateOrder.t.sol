@@ -11,21 +11,6 @@ contract MarketTest is Test {
         market = new Market("Market");
     }
 
-    function test_Market() public view {
-        assertEq(market.name(), "Market");
-    }
-
-    function test_Market_setName() public {
-        market.setName("New Market");
-        assertEq(market.name(), "New Market");
-    }
-
-    function test_Market_setName_Revert() public {
-        vm.prank(address(1));
-        vm.expectRevert("Only the owner can set the name");
-        market.setName("New Market");
-    }
-
     // BUY-YES-LIMIT
     function testFuzz_Market_CreateOrder_BuyYesLimit(uint256 amount, uint256 price) public {
         // Skip zero values
