@@ -9,4 +9,11 @@ contract Market {
         name = _name;
         owner = msg.sender;
     }
+
+    function setName(string memory _name) public {
+        if (msg.sender != owner) {
+            revert("Only the owner can set the name");
+        }
+        name = _name;
+    }
 }
