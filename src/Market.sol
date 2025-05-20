@@ -115,6 +115,13 @@ contract Market {
             revert("Cannot match non-pending orders");
         }
 
+        uint256 minAmount = order1.amount < order2.amount ? order1.amount : order2.amount;
+        uint256 maxAmount = order1.amount > order2.amount ? order1.amount : order2.amount;
+
+        if (minAmount == 0 || maxAmount == 0) {
+            revert("Cannot match orders with zero amount");
+        }
+
         if (OrderUtils.isBuySell(order1, order2)) {
             if (!OrderUtils.isYesYes(order1, order2) && !OrderUtils.isNoNo(order1, order2)) {
                 revert("Need to be yes-yes or no-no to match buy-sell orders");
@@ -126,10 +133,19 @@ contract Market {
             // TODO: transfer money to seller
 
             // transfer shares
-            shares[order1.user][order1.yesNo] += order1.amount;
-            shares[order2.user][order2.yesNo] -= order2.amount;
+            shares[order1.user][order1.yesNo] += minAmount;
+            shares[order2.user][order2.yesNo] -= minAmount;
 
-            // TODO: update order status
+            if (minAmount == maxAmount) {
+                order1.status = OrderStatus.FILLED;
+                order2.status = OrderStatus.FILLED;
+            } else if (minAmount == order1.amount) {
+                order1.status = OrderStatus.FILLED;
+                order2.amount -= minAmount;
+            } else {
+                order2.status = OrderStatus.FILLED;
+                order1.amount -= minAmount;
+            }
         } else if (OrderUtils.isBuyBuy(order1, order2)) {
             if (!OrderUtils.isYesNo(order1, order2)) {
                 revert("Need to be yes-no to match buy-buy orders");
@@ -140,19 +156,21 @@ contract Market {
             // TODO: transfer money to vault
 
             // create shares
-            shares[order1.user][order1.yesNo] += order1.amount;
-            shares[order2.user][order2.yesNo] += order2.amount;
+            shares[order1.user][order1.yesNo] += minAmount;
+            shares[order2.user][order2.yesNo] += minAmount;
 
-            // TODO: update order status
+            if (minAmount == maxAmount) {
+                order1.status = OrderStatus.FILLED;
+                order2.status = OrderStatus.FILLED;
+            } else if (minAmount == order1.amount) {
+                order1.status = OrderStatus.FILLED;
+                order2.amount -= minAmount;
+            } else {
+                order2.status = OrderStatus.FILLED;
+                order1.amount -= minAmount;
+            }
         } else {
             revert("Invalid order");
-        }
-
-        if (order1.amount == 0) {
-            order1.status = OrderStatus.FILLED;
-        }
-        if (order2.amount == 0) {
-            order2.status = OrderStatus.FILLED;
         }
     }
 }
