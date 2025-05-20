@@ -3,12 +3,16 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Market, BuySell, LimitMarket, YesNo, OrderStatus, Order} from "../src/Market.sol";
+import {IERC20} from "../src/interfaces/IERC20.sol";
+import {MockERC20} from "../src/__mocks__/MockERC20.sol";
 
 contract MarketTest is Test {
+    IERC20 public token;
     Market public market;
 
     function setUp() public {
-        market = new Market("Market");
+        token = IERC20(address(new MockERC20("Token", "TKN")));
+        market = new Market("Market", address(token));
     }
 
     function test_Market() public view {

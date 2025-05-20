@@ -3,8 +3,11 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Market, BuySell, LimitMarket, YesNo, OrderStatus, Order} from "../src/Market.sol";
+import {IERC20} from "../src/interfaces/IERC20.sol";
+import {MockERC20} from "../src/__mocks__/MockERC20.sol";
 
 contract MatchOrdersTest is Test {
+    IERC20 public token;
     Market public market;
     address alice = address(0x1);
     address bob = address(0x2);
@@ -12,7 +15,8 @@ contract MatchOrdersTest is Test {
     address carol = address(0xCC);
 
     function setUp() public {
-        market = new Market("TestMarket");
+        token = IERC20(address(new MockERC20("Token", "TKN")));
+        market = new Market("TestMarket", address(token));
         vm.deal(alice, 100 ether);
         vm.deal(bob, 100 ether);
         vm.deal(charlie, 100 ether);
