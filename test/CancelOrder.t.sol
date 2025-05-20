@@ -71,4 +71,13 @@ contract MarketTest is Test {
         vm.expectRevert("Cannot cancel a non-pending order");
         market.cancelOrder(1);
     }
+
+    function testFail_DoubleCancel() public {
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 10, 10);
+        market.cancelOrder(1);
+
+        // second cancel must revert
+        vm.expectRevert("Cannot cancel a non-pending order");
+        market.cancelOrder(1);
+    }
 }
