@@ -72,7 +72,7 @@ contract MarketTest is Test {
         market.cancelOrder(1);
     }
 
-    function testFail_DoubleCancel() public {
+    function test_DoubleCancel() public {
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 10, 10);
         market.cancelOrder(1);
 

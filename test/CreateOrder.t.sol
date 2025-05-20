@@ -163,7 +163,7 @@ contract MarketTest is Test {
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 0, 0);
     }
 
-    function testFail_SellWithoutShares() public {
+    function test_SellWithoutShares() public {
         vm.expectRevert("Sell is not allowed if you don't own shares");
         market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 10, 10);
     }

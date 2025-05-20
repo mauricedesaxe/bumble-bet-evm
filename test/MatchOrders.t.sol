@@ -211,7 +211,7 @@ contract MatchOrdersTest is Test {
         ► FAILURE TESTS
     ────────────────────────*/
 
-    function testFail_NonOwnerMatch() public {
+    function test_NonOwnerMatch() public {
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
@@ -228,7 +228,7 @@ contract MatchOrdersTest is Test {
         market.matchOrders(alice, bob, 1, 1);
     }
 
-    function testFail_SameUserMatch() public {
+    function test_SameUserMatch() public {
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
@@ -244,7 +244,7 @@ contract MatchOrdersTest is Test {
         market.matchOrders(alice, alice, 1, 2);
     }
 
-    function testFail_NonExistentOrder() public {
+    function test_NonExistentOrder() public {
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
@@ -255,7 +255,7 @@ contract MatchOrdersTest is Test {
         market.matchOrders(alice, bob, 1, 999);
     }
 
-    function testFail_CancelledOrder() public {
+    function test_CancelledOrder() public {
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
@@ -276,7 +276,7 @@ contract MatchOrdersTest is Test {
         market.matchOrders(alice, bob, 1, 1);
     }
 
-    function testFail_IncompatibleOrders_YesNo() public {
+    function test_IncompatibleOrders_YesNo() public {
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
@@ -292,7 +292,7 @@ contract MatchOrdersTest is Test {
         market.matchOrders(alice, bob, 1, 1);
     }
 
-    function testFail_MatchAlreadyFilled() public {
+    function test_MatchAlreadyFilled() public {
         vm.prank(alice);
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 10, 10);
 
@@ -353,7 +353,7 @@ contract MatchOrdersTest is Test {
         ► PRICE TESTS
     ────────────────────────*/
 
-    function testFail_BuySell_PriceMismatch_Reverts() public {
+    function test_BuySell_PriceMismatch_Reverts() public {
         // Bob creates a BUY order for YES at price 50
         vm.prank(bob);
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
@@ -418,7 +418,7 @@ contract MatchOrdersTest is Test {
         assertEq(market.shares(bob, YesNo.YES), 0); // Started with 100, sold 100
     }
 
-    function testFail_BuyBuy_PriceSum_Invalid_Reverts() public {
+    function test_BuyBuy_PriceSum_Invalid_Reverts() public {
         // Alice creates a BUY order for YES at price 60
         vm.prank(alice);
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 60);
@@ -457,7 +457,7 @@ contract MatchOrdersTest is Test {
         assertEq(market.shares(bob, YesNo.NO), 100);
     }
 
-    function testFail_BuyBuy_PriceSum_TooLow_Reverts() public {
+    function test_BuyBuy_PriceSum_TooLow_Reverts() public {
         // Alice creates a BUY order for YES at price 30
         vm.prank(alice);
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 30);
