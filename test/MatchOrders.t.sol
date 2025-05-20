@@ -296,9 +296,11 @@ contract MatchOrdersTest is Test {
     function test_MatchAlreadyFilled() public {
         vm.prank(alice);
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 10, 10);
+        vm.stopPrank();
 
         vm.prank(bob);
         market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 10, 90);
+        vm.stopPrank();
 
         market.matchOrders(alice, bob, 1, 1);
 
