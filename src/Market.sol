@@ -131,7 +131,11 @@ contract Market {
                 revert("Seller does not have enough shares");
             }
 
-            // TODO: price check
+            // Price check for BUY-SELL orders
+            if (order1.price < order2.price) {
+                revert("BUY price below SELL price");
+            }
+
             // TODO: transfer money to seller
 
             // transfer shares
@@ -153,7 +157,11 @@ contract Market {
                 revert("Need to be yes-no to match buy-buy orders");
             }
 
-            // TODO: price check
+            // Price check for BUY-BUY orders
+            if (order1.price + order2.price != 100) {
+                revert("YES+NO prices must sum to 100");
+            }
+
             // TODO: transfer money to vault
 
             // create shares
