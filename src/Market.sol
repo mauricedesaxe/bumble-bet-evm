@@ -67,8 +67,10 @@ contract Market {
         }
 
         if (_side == BuySell.SELL) {
-            // TODO check if user does have the balance to sell
-            revert("Sell is not allowed if you don't own shares");
+            // check if user does have the shares to sell
+            if (shares[msg.sender][_yesNo] < _amount) {
+                revert("Sell is not allowed if you don't own shares");
+            }
         }
 
         orderCount[msg.sender]++;
