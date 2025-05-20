@@ -16,6 +16,9 @@ contract MarketTest is Test {
 
         // Set up token balances
         token.mint(address(this), 100 ether);
+
+        // Set up token allowances
+        token.approve(address(market), 100 ether);
     }
 
     // BUY-YES-LIMIT

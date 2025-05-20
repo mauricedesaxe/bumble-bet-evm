@@ -30,6 +30,25 @@ contract MatchOrdersTest is Test {
         token.mint(bob, 100 ether);
         token.mint(charlie, 100 ether);
         token.mint(carol, 100 ether);
+
+        // Set up token allowances
+        token.approve(address(market), 100 ether);
+
+        vm.startPrank(alice);
+        token.approve(address(market), 100 ether);
+        vm.stopPrank();
+
+        vm.startPrank(bob);
+        token.approve(address(market), 100 ether);
+        vm.stopPrank();
+
+        vm.startPrank(charlie);
+        token.approve(address(market), 100 ether);
+        vm.stopPrank();
+
+        vm.startPrank(carol);
+        token.approve(address(market), 100 ether);
+        vm.stopPrank();
     }
 
     /*────────────────────────
