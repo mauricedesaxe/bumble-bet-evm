@@ -103,6 +103,9 @@ contract Market {
 
         Order storage order1 = orders[_user1][_orderId1];
         Order storage order2 = orders[_user2][_orderId2];
+        if (order1.user == address(0) || order2.user == address(0)) {
+            revert("Order does not exist");
+        }
 
         if (order1.status != OrderStatus.PENDING || order2.status != OrderStatus.PENDING) {
             revert("Cannot match non-pending orders");
