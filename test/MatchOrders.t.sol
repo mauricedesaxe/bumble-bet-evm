@@ -166,17 +166,17 @@ contract MatchOrdersTest is Test {
 
         // Buyer still needs 40 → order should stay PENDING w/ 40 left
         (, uint256 remaining0,,,,, OrderStatus status0) = market.orders(alice, 1);
-        assertEq(remaining0, 40);
-        assertEq(uint256(status0), uint256(OrderStatus.PENDING));
+        assertEq(remaining0, 40, "Alice should have 40 YES shares remaining in her order");
+        assertEq(uint256(status0), uint256(OrderStatus.PENDING), "Alice's order should be PENDING");
 
         // Seller completely filled → FILLED & no remaining
         (, uint256 remaining1,,,,, OrderStatus status1) = market.orders(bob, 2);
-        assertEq(remaining1, 0);
-        assertEq(uint256(status1), uint256(OrderStatus.FILLED));
+        assertEq(remaining1, 0, "Bob should have 0 YES shares remaining in his order");
+        assertEq(uint256(status1), uint256(OrderStatus.FILLED), "Bob's order should be FILLED");
 
         // Verify share balances
-        assertEq(market.shares(alice, YesNo.YES), 60);
-        assertEq(market.shares(bob, YesNo.YES), 90); // 150 – 60
+        assertEq(market.shares(alice, YesNo.YES), 60, "Alice should have 60 YES shares");
+        assertEq(market.shares(bob, YesNo.YES), 90, "Bob should have 90 YES shares"); // 150 – 60
     }
 
     function test_PartialFill_BuyBuy_YesNo_Symmetric() public {
@@ -195,17 +195,17 @@ contract MatchOrdersTest is Test {
 
         // Alice completely filled
         (, uint256 remaining0,,,,, OrderStatus status0) = market.orders(alice, 1);
-        assertEq(remaining0, 0);
-        assertEq(uint256(status0), uint256(OrderStatus.FILLED));
+        assertEq(remaining0, 0, "Alice should have 0 remaining shares in her order");
+        assertEq(uint256(status0), uint256(OrderStatus.FILLED), "Alice's order should be FILLED");
 
         // Bob still has 120 NO to buy
         (, uint256 remaining1,,,,, OrderStatus status1) = market.orders(bob, 1);
-        assertEq(remaining1, 120);
-        assertEq(uint256(status1), uint256(OrderStatus.PENDING));
+        assertEq(remaining1, 120, "Bob should have 120 NO shares remaining in his order");
+        assertEq(uint256(status1), uint256(OrderStatus.PENDING), "Bob's order should be PENDING");
 
         // Verify share balances
-        assertEq(market.shares(alice, YesNo.YES), 80);
-        assertEq(market.shares(bob, YesNo.NO), 80);
+        assertEq(market.shares(alice, YesNo.YES), 80, "Alice should have 80 YES shares");
+        assertEq(market.shares(bob, YesNo.NO), 80, "Bob should have 80 NO shares");
     }
 
     /*────────────────────────
