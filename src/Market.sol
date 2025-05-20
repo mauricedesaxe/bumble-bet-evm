@@ -127,7 +127,10 @@ contract Market {
                 revert("Need to be yes-yes or no-no to match buy-sell orders");
             }
 
-            // TODO: check if seller has enough shares
+            if (shares[order2.user][order2.yesNo] < minAmount) {
+                revert("Seller does not have enough shares");
+            }
+
             // TODO: order size check / partials fills / etc
             // TODO: price check
             // TODO: transfer money to seller
