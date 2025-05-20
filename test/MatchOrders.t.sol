@@ -278,6 +278,23 @@ contract MatchOrdersTest is Test {
     }
 
     function test_IncompatibleOrders_YesNo() public {
+        // Charlie creates a BUY order for Yes
+        vm.prank(charlie);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        vm.stopPrank();
+
+        // Bob creates a BUY order for No
+        vm.prank(bob);
+        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        vm.stopPrank();
+
+        // Owner matches Bob with Charlie (Bob BUY, Charlie BUY) which creates shares out of thin air
+        market.matchOrders(charlie, bob, 1, 1);
+
+        // Verify shares are created
+        assertEq(market.shares(charlie, YesNo.YES), 100);
+        assertEq(market.shares(bob, YesNo.NO), 100);
+
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
@@ -290,7 +307,7 @@ contract MatchOrdersTest is Test {
 
         // Should fail - YES-NO in BUY-SELL
         vm.expectRevert("Need to be yes-yes or no-no to match buy-sell orders");
-        market.matchOrders(alice, bob, 1, 1);
+        market.matchOrders(alice, bob, 1, 2);
     }
 
     function test_MatchAlreadyFilled() public {
