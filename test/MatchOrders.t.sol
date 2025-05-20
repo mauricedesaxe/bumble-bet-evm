@@ -320,25 +320,28 @@ contract MatchOrdersTest is Test {
         totalNo = market.shares(alice, YesNo.NO) + market.shares(bob, YesNo.NO);
     }
 
-    function testFuzz_Invariant_YesEqualsNo_AfterBuyBuyMatches(uint256 amount1, uint256 amount2, uint256 price)
+    function testFuzz_Invariant_YesEqualsNo_AfterBuyBuyMatches(uint256 amount1, uint256 amount2, uint256 yesPrice)
         public
     {
+        // Bound the price to be between 1 and 99
+        yesPrice = bound(yesPrice, 1, 99);
+        uint256 noPrice = 100 - yesPrice;
+
         // Skip zero values
         vm.assume(amount1 > 0);
         vm.assume(amount2 > 0);
-        vm.assume(price > 0);
 
         _updateTotals();
         assertEq(totalYes, totalNo, "YES / NO totals must be equal before matching (1)");
 
         // Alice creates a BUY order for YES
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, amount1, price);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, amount1, yesPrice);
         vm.stopPrank();
 
         // Bob creates a BUY order for NO
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, amount2, price);
+        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, amount2, noPrice);
         vm.stopPrank();
 
         // Owner matches Alice with Bob (Alice BUY, Bob BUY)
