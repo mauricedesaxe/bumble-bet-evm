@@ -47,7 +47,7 @@ contract MatchOrdersTest is Test {
     function test_BuySell_YesYes_Match() public {
         // Bob creates a BUY order for YES
         vm.startPrank(bob);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 200, 40);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 200, 60);
         vm.stopPrank();
 
         // Charlie creates a BUY order for NO
@@ -91,12 +91,12 @@ contract MatchOrdersTest is Test {
     function test_BuySell_NoNo_Match() public {
         // Bob creates a BUY order for NO
         vm.startPrank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 200, 40);
+        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 200, 50);
         vm.stopPrank();
 
         // Charlie creates a BUY order for YES
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 200, 40);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 200, 50);
         vm.stopPrank();
 
         // Owner matches Bob with Charlie (both BUY orders) which creates shares out of thin air
@@ -145,7 +145,7 @@ contract MatchOrdersTest is Test {
 
         // Carol creates a BUY order for NO
         vm.prank(carol);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 150, 40);
+        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 150, 60);
         vm.stopPrank();
 
         // Owner matches Bob with Carol (Bob BUY, Carol BUY) which creates shares out of thin air
@@ -187,7 +187,7 @@ contract MatchOrdersTest is Test {
 
         // Bob creates a BUY order for 200 NO
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 200, 30);
+        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 200, 70);
         vm.stopPrank();
 
         // Owner matches Alice with Bob (Alice BUY, Bob BUY) which creates shares out of thin air
@@ -298,7 +298,7 @@ contract MatchOrdersTest is Test {
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 10, 10);
 
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 10, 10);
+        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 10, 90);
 
         market.matchOrders(alice, bob, 1, 1);
 
