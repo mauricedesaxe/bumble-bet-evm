@@ -100,7 +100,8 @@ contract MatchOrdersTest is Test {
         vm.stopPrank();
 
         // Owner matches Bob with Charlie (both BUY orders) which creates shares out of thin air
-        market.matchOrders(bob, charlie, 1, 1);
+        // Have Charlie the first order to have a Yes-No order instead of a No-Yes
+        market.matchOrders(charlie, bob, 1, 1);
 
         // Verify orders are filled and shares are created
         (,,,,,, OrderStatus status1) = market.orders(bob, 1);
