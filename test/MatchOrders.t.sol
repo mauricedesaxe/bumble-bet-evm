@@ -375,9 +375,11 @@ contract MatchOrdersTest is Test {
     function testFuzz_Invariant_YesEqualsNo_AfterBuyBuyMatches(uint256 amount1, uint256 amount2, uint256 yesPrice)
         public
     {
-        // Bound the price to be between 1 and 99
-        yesPrice = bound(yesPrice, 1, 99);
+        // Limit values to reasonable ranges to avoid overflow and insufficient balance
+        yesPrice = bound(yesPrice, 1, 99); // 100%
         uint256 noPrice = 100 - yesPrice;
+        amount1 = bound(amount1, 1, 100 ether * 100 / yesPrice);
+        amount2 = bound(amount2, 1, 100 ether * 100 / noPrice);
 
         // Skip zero values
         vm.assume(amount1 > 0);

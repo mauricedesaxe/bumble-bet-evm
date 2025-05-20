@@ -35,8 +35,9 @@ contract MarketTest is Test {
 
     // Fuzz test with different order parameters
     function testFuzz_Market_CancelOrder(uint256 amount, uint256 price) public {
-        vm.assume(amount > 0);
-        vm.assume(price > 0);
+        // Limit values to reasonable ranges to avoid overflow and insufficient balance
+        price = bound(price, 1, 99); // 100%
+        amount = bound(amount, 1, 100 ether * 100 / price);
 
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, amount, price);
         market.cancelOrder(1);

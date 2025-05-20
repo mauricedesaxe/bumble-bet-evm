@@ -23,9 +23,9 @@ contract MarketTest is Test {
 
     // BUY-YES-LIMIT
     function testFuzz_Market_CreateOrder_BuyYesLimit(uint256 amount, uint256 price) public {
-        // Skip zero values
-        vm.assume(amount > 0);
-        vm.assume(price > 0);
+        // Limit values to reasonable ranges to avoid overflow and insufficient balance
+        price = bound(price, 1, 99); // 100%
+        amount = bound(amount, 1, 100 ether * 100 / price);
 
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, amount, price);
         assertEq(market.orderCount(address(this)), 1);
@@ -51,9 +51,9 @@ contract MarketTest is Test {
 
     // BUY-YES-MARKET
     function testFuzz_Market_CreateOrder_BuyYesMarket(uint256 amount, uint256 price) public {
-        // Skip zero values
-        vm.assume(amount > 0);
-        vm.assume(price > 0);
+        // Limit values to reasonable ranges to avoid overflow and insufficient balance
+        price = bound(price, 1, 99); // 100%
+        amount = bound(amount, 1, 100 ether * 100 / price);
 
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.MARKET, amount, price);
         assertEq(market.orderCount(address(this)), 1);
@@ -79,9 +79,9 @@ contract MarketTest is Test {
 
     // BUY-NO-LIMIT
     function testFuzz_Market_CreateOrder_BuyNoLimit(uint256 amount, uint256 price) public {
-        // Skip zero values
-        vm.assume(amount > 0);
-        vm.assume(price > 0);
+        // Limit values to reasonable ranges to avoid overflow and insufficient balance
+        price = bound(price, 1, 99); // 100%
+        amount = bound(amount, 1, 100 ether * 100 / price);
 
         market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, amount, price);
         assertEq(market.orderCount(address(this)), 1);
@@ -107,9 +107,9 @@ contract MarketTest is Test {
 
     // BUY-NO-MARKET
     function testFuzz_Market_CreateOrder_BuyNoMarket(uint256 amount, uint256 price) public {
-        // Skip zero values
-        vm.assume(amount > 0);
-        vm.assume(price > 0);
+        // Limit values to reasonable ranges to avoid overflow and insufficient balance
+        price = bound(price, 1, 99); // 100%
+        amount = bound(amount, 1, 100 ether * 100 / price);
 
         market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.MARKET, amount, price);
         assertEq(market.orderCount(address(this)), 1);
@@ -117,9 +117,9 @@ contract MarketTest is Test {
 
     // SELL-YES-LIMIT (should revert)
     function testFuzz_Market_CreateOrder_SellYesLimit(uint256 amount, uint256 price) public {
-        // Skip zero values
-        vm.assume(amount > 0);
-        vm.assume(price > 0);
+        // Limit values to reasonable ranges to avoid overflow and insufficient balance
+        price = bound(price, 1, 99); // 100%
+        amount = bound(amount, 1, 100 ether * 100 / price);
 
         vm.expectRevert("Sell is not allowed if you don't own shares");
         market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, amount, price);
@@ -127,9 +127,9 @@ contract MarketTest is Test {
 
     // SELL-YES-MARKET (should revert)
     function testFuzz_Market_CreateOrder_SellYesMarket(uint256 amount, uint256 price) public {
-        // Skip zero values
-        vm.assume(amount > 0);
-        vm.assume(price > 0);
+        // Limit values to reasonable ranges to avoid overflow and insufficient balance
+        price = bound(price, 1, 99); // 100%
+        amount = bound(amount, 1, 100 ether * 100 / price);
 
         vm.expectRevert("Sell is not allowed if you don't own shares");
         market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.MARKET, amount, price);
@@ -137,9 +137,9 @@ contract MarketTest is Test {
 
     // SELL-NO-LIMIT (should revert)
     function testFuzz_Market_CreateOrder_SellNoLimit(uint256 amount, uint256 price) public {
-        // Skip zero values
-        vm.assume(amount > 0);
-        vm.assume(price > 0);
+        // Limit values to reasonable ranges to avoid overflow and insufficient balance
+        price = bound(price, 1, 99); // 100%
+        amount = bound(amount, 1, 100 ether * 100 / price);
 
         vm.expectRevert("Sell is not allowed if you don't own shares");
         market.createOrder(BuySell.SELL, YesNo.NO, LimitMarket.LIMIT, amount, price);
@@ -147,9 +147,9 @@ contract MarketTest is Test {
 
     // SELL-NO-MARKET (should revert)
     function testFuzz_Market_CreateOrder_SellNoMarket(uint256 amount, uint256 price) public {
-        // Skip zero values
-        vm.assume(amount > 0);
-        vm.assume(price > 0);
+        // Limit values to reasonable ranges to avoid overflow and insufficient balance
+        price = bound(price, 1, 99); // 100%
+        amount = bound(amount, 1, 100 ether * 100 / price);
 
         vm.expectRevert("Sell is not allowed if you don't own shares");
         market.createOrder(BuySell.SELL, YesNo.NO, LimitMarket.MARKET, amount, price);
