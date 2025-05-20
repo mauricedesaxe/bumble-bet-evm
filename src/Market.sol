@@ -147,11 +147,15 @@ contract Market {
             if (minAmount == maxAmount) {
                 order1.status = OrderStatus.FILLED;
                 order2.status = OrderStatus.FILLED;
+                order1.amount = 0;
+                order2.amount = 0;
             } else if (minAmount == order1.amount) {
                 order1.status = OrderStatus.FILLED;
+                order1.amount = 0;
                 order2.amount -= minAmount;
             } else {
                 order2.status = OrderStatus.FILLED;
+                order2.amount = 0;
                 order1.amount -= minAmount;
             }
         } else if (OrderUtils.isBuyBuy(order1, order2)) {
@@ -173,11 +177,15 @@ contract Market {
             if (minAmount == maxAmount) {
                 order1.status = OrderStatus.FILLED;
                 order2.status = OrderStatus.FILLED;
+                order1.amount = 0;
+                order2.amount = 0;
             } else if (minAmount == order1.amount) {
                 order1.status = OrderStatus.FILLED;
+                order1.amount = 0;
                 order2.amount -= minAmount;
             } else {
                 order2.status = OrderStatus.FILLED;
+                order2.amount = 0;
                 order1.amount -= minAmount;
             }
         } else {
