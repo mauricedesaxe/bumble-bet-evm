@@ -131,7 +131,6 @@ contract Market {
                 revert("Seller does not have enough shares");
             }
 
-            // TODO: order size check / partials fills / etc
             // TODO: price check
             // TODO: transfer money to seller
 
@@ -154,7 +153,6 @@ contract Market {
                 revert("Need to be yes-no to match buy-buy orders");
             }
 
-            // TODO: order size check / partials fills / etc
             // TODO: price check
             // TODO: transfer money to vault
 
