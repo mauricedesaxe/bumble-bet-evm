@@ -55,6 +55,11 @@ interface IERC20 {
     function approve(address spender, uint256 amount) external returns (bool);
 
     /**
+     * @dev Mints tokens to the specified address
+     */
+    function mint(address to, uint256 amount) external;
+
+    /**
      * @dev Emitted when tokens are transferred
      */
     event Transfer(address indexed from, address indexed to, uint256 value);
