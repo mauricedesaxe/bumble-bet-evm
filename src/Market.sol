@@ -140,5 +140,12 @@ contract Market {
         } else {
             revert("Invalid order");
         }
+
+        if (order1.amount == 0) {
+            order1.status = OrderStatus.FILLED;
+        }
+        if (order2.amount == 0) {
+            order2.status = OrderStatus.FILLED;
+        }
     }
 }
