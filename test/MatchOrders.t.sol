@@ -17,10 +17,19 @@ contract MatchOrdersTest is Test {
     function setUp() public {
         token = IERC20(address(new MockERC20("Token", "TKN")));
         market = new Market("TestMarket", address(token));
+
+        // Set up balances
         vm.deal(alice, 100 ether);
         vm.deal(bob, 100 ether);
         vm.deal(charlie, 100 ether);
         vm.deal(carol, 100 ether);
+
+        // Set up token balances
+        token.mint(address(this), 100 ether);
+        token.mint(alice, 100 ether);
+        token.mint(bob, 100 ether);
+        token.mint(charlie, 100 ether);
+        token.mint(carol, 100 ether);
     }
 
     /*────────────────────────

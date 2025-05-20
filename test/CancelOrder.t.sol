@@ -13,6 +13,9 @@ contract MarketTest is Test {
     function setUp() public {
         token = IERC20(address(new MockERC20("Token", "TKN")));
         market = new Market("Market", address(token));
+
+        // Set up token balances
+        token.mint(address(this), 100 ether);
     }
 
     // Test successful order cancellation
