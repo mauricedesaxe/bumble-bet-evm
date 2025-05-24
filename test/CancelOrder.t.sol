@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {Market, BuySell, YesNo, OrderStatus, Order} from "../src/Market.sol";
+import {Market, OrderSide, MarketOutcome, OrderStatus, Order} from "../src/Market.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {MockERC20} from "../src/__mocks__/MockERC20.sol";
 
@@ -26,7 +26,7 @@ contract MarketTest is Test {
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 marketBalanceBefore = token.balanceOf(address(market));
 
-        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
+        market.createOrder(OrderSide.BUY, MarketOutcome.YES, 100, 50);
         assertEq(market.orderCount(address(this)), 1);
 
         market.cancelOrder(1);
@@ -51,7 +51,7 @@ contract MarketTest is Test {
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 marketBalanceBefore = token.balanceOf(address(market));
 
-        market.createOrder(BuySell.BUY, YesNo.YES, amount, price);
+        market.createOrder(OrderSide.BUY, MarketOutcome.YES, amount, price);
         market.cancelOrder(1);
 
         uint256 balanceAfter = token.balanceOf(address(this));
@@ -71,9 +71,9 @@ contract MarketTest is Test {
         uint256 marketBalanceBefore = token.balanceOf(address(market));
 
         // Create three orders
-        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
-        market.createOrder(BuySell.BUY, YesNo.NO, 200, 75);
-        market.createOrder(BuySell.BUY, YesNo.YES, 300, 100);
+        market.createOrder(OrderSide.BUY, MarketOutcome.YES, 100, 50);
+        market.createOrder(OrderSide.BUY, MarketOutcome.NO, 200, 75);
+        market.createOrder(OrderSide.BUY, MarketOutcome.YES, 300, 100);
 
         // Cancel first and third orders
         market.cancelOrder(1);
@@ -106,7 +106,7 @@ contract MarketTest is Test {
 
     // Test canceling a non-pending order
     function test_Market_CancelNonPendingOrder() public {
-        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
+        market.createOrder(OrderSide.BUY, MarketOutcome.YES, 100, 50);
 
         market.cancelOrder(1);
 
@@ -115,7 +115,7 @@ contract MarketTest is Test {
     }
 
     function test_DoubleCancel() public {
-        market.createOrder(BuySell.BUY, YesNo.YES, 10, 10);
+        market.createOrder(OrderSide.BUY, MarketOutcome.YES, 10, 10);
         market.cancelOrder(1);
 
         // second cancel must revert

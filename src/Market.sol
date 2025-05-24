@@ -4,12 +4,12 @@ pragma solidity ^0.8.13;
 import {OrderUtils} from "./OrderUtils.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 
-enum BuySell {
+enum OrderSide {
     BUY,
     SELL
 }
 
-enum YesNo {
+enum MarketOutcome {
     YES,
     NO
 }
@@ -24,8 +24,8 @@ struct Order {
     address user;
     uint256 amount;
     uint256 price;
-    BuySell side;
-    YesNo yesNo;
+    OrderSide side;
+    MarketOutcome yesNo;
     OrderStatus status;
 }
 
@@ -38,7 +38,7 @@ contract Market {
 
     mapping(address => uint256) public orderCount;
     mapping(address => mapping(uint256 => Order)) public orders;
-    mapping(address => mapping(YesNo => uint256)) public shares;
+    mapping(address => mapping(MarketOutcome => uint256)) public shares;
 
     constructor(string memory _name, address _paymentToken) {
         name = _name;
@@ -53,7 +53,7 @@ contract Market {
         name = _name;
     }
 
-    function createOrder(BuySell _side, YesNo _yesNo, uint256 _amount, uint256 _price) public {
+    function createOrder(OrderSide _side, MarketOutcome _outcome, uint256 _amount, uint256 _price) public {
         if (_amount == 0) {
             revert("Amount must be greater than zero");
         }
@@ -63,7 +63,7 @@ contract Market {
 
         uint256 totalCost = _amount * _price / 100;
 
-        if (_side == BuySell.BUY) {
+        if (_side == OrderSide.BUY) {
             // Check if buyer has enough token balance
             if (paymentToken.balanceOf(msg.sender) < totalCost) {
                 revert("Insufficient balance");
@@ -71,9 +71,9 @@ contract Market {
 
             // Transfer payment to contract for escrow
             paymentToken.transferFrom(msg.sender, address(this), totalCost);
-        } else if (_side == BuySell.SELL) {
+        } else if (_side == OrderSide.SELL) {
             // check if user does have the shares to sell
-            if (shares[msg.sender][_yesNo] < _amount) {
+            if (shares[msg.sender][_outcome] < _amount) {
                 revert("Sell is not allowed if you don't own shares");
             }
         }
@@ -84,7 +84,7 @@ contract Market {
             amount: _amount,
             price: _price,
             side: _side,
-            yesNo: _yesNo,
+            yesNo: _outcome,
             status: OrderStatus.PENDING
         });
     }
@@ -100,7 +100,7 @@ contract Market {
         }
 
         // Return escrowed funds if it was a buy order
-        if (order.side == BuySell.BUY) {
+        if (order.side == OrderSide.BUY) {
             uint256 refundAmount = order.amount * order.price / 100;
             paymentToken.transfer(msg.sender, refundAmount);
         }
