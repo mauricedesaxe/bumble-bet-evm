@@ -27,8 +27,17 @@ contract MarketTest is Test {
         price = bound(price, 1, 99); // 100%
         amount = bound(amount, 1, 100 ether * 100 / price);
 
+        uint256 balanceBefore = token.balanceOf(address(this));
+        uint256 marketBalanceBefore = token.balanceOf(address(market));
+
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, amount, price);
         assertEq(market.orderCount(address(this)), 1);
+
+        uint256 balanceAfter = token.balanceOf(address(this));
+        uint256 marketBalanceAfter = token.balanceOf(address(market));
+
+        assertEq(balanceAfter, balanceBefore - amount * price / 100);
+        assertEq(marketBalanceAfter, marketBalanceBefore + amount * price / 100);
 
         (
             address user,
@@ -55,8 +64,17 @@ contract MarketTest is Test {
         price = bound(price, 1, 99); // 100%
         amount = bound(amount, 1, 100 ether * 100 / price);
 
+        uint256 balanceBefore = token.balanceOf(address(this));
+        uint256 marketBalanceBefore = token.balanceOf(address(market));
+
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.MARKET, amount, price);
         assertEq(market.orderCount(address(this)), 1);
+
+        uint256 balanceAfter = token.balanceOf(address(this));
+        uint256 marketBalanceAfter = token.balanceOf(address(market));
+
+        assertEq(balanceAfter, balanceBefore - amount * price / 100);
+        assertEq(marketBalanceAfter, marketBalanceBefore + amount * price / 100);
 
         (
             address user,
@@ -83,8 +101,17 @@ contract MarketTest is Test {
         price = bound(price, 1, 99); // 100%
         amount = bound(amount, 1, 100 ether * 100 / price);
 
+        uint256 balanceBefore = token.balanceOf(address(this));
+        uint256 marketBalanceBefore = token.balanceOf(address(market));
+
         market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, amount, price);
         assertEq(market.orderCount(address(this)), 1);
+
+        uint256 balanceAfter = token.balanceOf(address(this));
+        uint256 marketBalanceAfter = token.balanceOf(address(market));
+
+        assertEq(balanceAfter, balanceBefore - amount * price / 100);
+        assertEq(marketBalanceAfter, marketBalanceBefore + amount * price / 100);
 
         (
             address user,
@@ -111,8 +138,17 @@ contract MarketTest is Test {
         price = bound(price, 1, 99); // 100%
         amount = bound(amount, 1, 100 ether * 100 / price);
 
+        uint256 balanceBefore = token.balanceOf(address(this));
+        uint256 marketBalanceBefore = token.balanceOf(address(market));
+
         market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.MARKET, amount, price);
         assertEq(market.orderCount(address(this)), 1);
+
+        uint256 balanceAfter = token.balanceOf(address(this));
+        uint256 marketBalanceAfter = token.balanceOf(address(market));
+
+        assertEq(balanceAfter, balanceBefore - amount * price / 100);
+        assertEq(marketBalanceAfter, marketBalanceBefore + amount * price / 100);
     }
 
     // SELL-YES-LIMIT (should revert)
