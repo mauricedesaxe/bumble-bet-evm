@@ -23,10 +23,19 @@ contract MarketTest is Test {
 
     // Test successful order cancellation
     function test_Market_CancelOrder() public {
+        uint256 balanceBefore = token.balanceOf(address(this));
+        uint256 marketBalanceBefore = token.balanceOf(address(market));
+
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
         assertEq(market.orderCount(address(this)), 1);
 
         market.cancelOrder(1);
+
+        uint256 balanceAfter = token.balanceOf(address(this));
+        uint256 marketBalanceAfter = token.balanceOf(address(market));
+
+        assertEq(balanceAfter, balanceBefore);
+        assertEq(marketBalanceAfter, marketBalanceBefore);
 
         (,,,,,, OrderStatus status) = market.orders(address(this), 1);
 
@@ -39,8 +48,17 @@ contract MarketTest is Test {
         price = bound(price, 1, 99); // 100%
         amount = bound(amount, 1, 100 ether * 100 / price);
 
+        uint256 balanceBefore = token.balanceOf(address(this));
+        uint256 marketBalanceBefore = token.balanceOf(address(market));
+
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, amount, price);
         market.cancelOrder(1);
+
+        uint256 balanceAfter = token.balanceOf(address(this));
+        uint256 marketBalanceAfter = token.balanceOf(address(market));
+
+        assertEq(balanceAfter, balanceBefore);
+        assertEq(marketBalanceAfter, marketBalanceBefore);
 
         (,,,,,, OrderStatus status) = market.orders(address(this), 1);
 
@@ -49,6 +67,9 @@ contract MarketTest is Test {
 
     // Test canceling multiple orders
     function test_Market_CancelMultipleOrders() public {
+        uint256 balanceBefore = token.balanceOf(address(this));
+        uint256 marketBalanceBefore = token.balanceOf(address(market));
+
         // Create three orders
         market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
         market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 200, 75);
@@ -57,6 +78,16 @@ contract MarketTest is Test {
         // Cancel first and third orders
         market.cancelOrder(1);
         market.cancelOrder(3);
+
+        uint256 balanceAfter = token.balanceOf(address(this));
+        uint256 marketBalanceAfter = token.balanceOf(address(market));
+
+        // Order 2 is still pending, so its cost (200 * 75 / 100 = 150) should still be in escrow
+        uint256 expectedBalance = balanceBefore - (200 * 75 / 100);
+        uint256 expectedMarketBalance = marketBalanceBefore + (200 * 75 / 100);
+
+        assertEq(balanceAfter, expectedBalance);
+        assertEq(marketBalanceAfter, expectedMarketBalance);
 
         (,,,,,, OrderStatus status1) = market.orders(address(this), 1);
         (,,,,,, OrderStatus status2) = market.orders(address(this), 2);
