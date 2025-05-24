@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {Market, BuySell, LimitMarket, YesNo, OrderStatus, Order} from "../src/Market.sol";
+import {Market, BuySell, YesNo, OrderStatus, Order} from "../src/Market.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {MockERC20} from "../src/__mocks__/MockERC20.sol";
 
@@ -30,7 +30,7 @@ contract MarketTest is Test {
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 marketBalanceBefore = token.balanceOf(address(market));
 
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, amount, price);
+        market.createOrder(BuySell.BUY, YesNo.YES, amount, price);
         assertEq(market.orderCount(address(this)), 1);
 
         uint256 balanceAfter = token.balanceOf(address(this));
@@ -39,20 +39,12 @@ contract MarketTest is Test {
         assertEq(balanceAfter, balanceBefore - amount * price / 100);
         assertEq(marketBalanceAfter, marketBalanceBefore + amount * price / 100);
 
-        (
-            address user,
-            uint256 orderAmount,
-            uint256 orderPrice,
-            BuySell side,
-            YesNo yesNo,
-            LimitMarket limitMarket,
-            OrderStatus status
-        ) = market.orders(address(this), 1);
+        (address user, uint256 orderAmount, uint256 orderPrice, BuySell side, YesNo yesNo, OrderStatus status) =
+            market.orders(address(this), 1);
 
         assertEq(user, address(this));
         assertEq(uint256(side), uint256(BuySell.BUY));
         assertEq(uint256(yesNo), uint256(YesNo.YES));
-        assertEq(uint256(limitMarket), uint256(LimitMarket.LIMIT));
         assertEq(orderAmount, amount);
         assertEq(orderPrice, price);
         assertEq(uint256(status), uint256(OrderStatus.PENDING));
@@ -67,7 +59,7 @@ contract MarketTest is Test {
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 marketBalanceBefore = token.balanceOf(address(market));
 
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.MARKET, amount, price);
+        market.createOrder(BuySell.BUY, YesNo.YES, amount, price);
         assertEq(market.orderCount(address(this)), 1);
 
         uint256 balanceAfter = token.balanceOf(address(this));
@@ -76,20 +68,12 @@ contract MarketTest is Test {
         assertEq(balanceAfter, balanceBefore - amount * price / 100);
         assertEq(marketBalanceAfter, marketBalanceBefore + amount * price / 100);
 
-        (
-            address user,
-            uint256 orderAmount,
-            uint256 orderPrice,
-            BuySell side,
-            YesNo yesNo,
-            LimitMarket limitMarket,
-            OrderStatus status
-        ) = market.orders(address(this), 1);
+        (address user, uint256 orderAmount, uint256 orderPrice, BuySell side, YesNo yesNo, OrderStatus status) =
+            market.orders(address(this), 1);
 
         assertEq(user, address(this));
         assertEq(uint256(side), uint256(BuySell.BUY));
         assertEq(uint256(yesNo), uint256(YesNo.YES));
-        assertEq(uint256(limitMarket), uint256(LimitMarket.MARKET));
         assertEq(orderAmount, amount);
         assertEq(orderPrice, price);
         assertEq(uint256(status), uint256(OrderStatus.PENDING));
@@ -104,7 +88,7 @@ contract MarketTest is Test {
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 marketBalanceBefore = token.balanceOf(address(market));
 
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, amount, price);
+        market.createOrder(BuySell.BUY, YesNo.NO, amount, price);
         assertEq(market.orderCount(address(this)), 1);
 
         uint256 balanceAfter = token.balanceOf(address(this));
@@ -113,20 +97,12 @@ contract MarketTest is Test {
         assertEq(balanceAfter, balanceBefore - amount * price / 100);
         assertEq(marketBalanceAfter, marketBalanceBefore + amount * price / 100);
 
-        (
-            address user,
-            uint256 orderAmount,
-            uint256 orderPrice,
-            BuySell side,
-            YesNo yesNo,
-            LimitMarket limitMarket,
-            OrderStatus status
-        ) = market.orders(address(this), 1);
+        (address user, uint256 orderAmount, uint256 orderPrice, BuySell side, YesNo yesNo, OrderStatus status) =
+            market.orders(address(this), 1);
 
         assertEq(user, address(this));
         assertEq(uint256(side), uint256(BuySell.BUY));
         assertEq(uint256(yesNo), uint256(YesNo.NO));
-        assertEq(uint256(limitMarket), uint256(LimitMarket.LIMIT));
         assertEq(orderAmount, amount);
         assertEq(orderPrice, price);
         assertEq(uint256(status), uint256(OrderStatus.PENDING));
@@ -141,7 +117,7 @@ contract MarketTest is Test {
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 marketBalanceBefore = token.balanceOf(address(market));
 
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.MARKET, amount, price);
+        market.createOrder(BuySell.BUY, YesNo.NO, amount, price);
         assertEq(market.orderCount(address(this)), 1);
 
         uint256 balanceAfter = token.balanceOf(address(this));
@@ -158,7 +134,7 @@ contract MarketTest is Test {
         amount = bound(amount, 1, 100 ether * 100 / price);
 
         vm.expectRevert("Sell is not allowed if you don't own shares");
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, amount, price);
+        market.createOrder(BuySell.SELL, YesNo.YES, amount, price);
     }
 
     // SELL-YES-MARKET (should revert)
@@ -168,7 +144,7 @@ contract MarketTest is Test {
         amount = bound(amount, 1, 100 ether * 100 / price);
 
         vm.expectRevert("Sell is not allowed if you don't own shares");
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.MARKET, amount, price);
+        market.createOrder(BuySell.SELL, YesNo.YES, amount, price);
     }
 
     // SELL-NO-LIMIT (should revert)
@@ -178,7 +154,7 @@ contract MarketTest is Test {
         amount = bound(amount, 1, 100 ether * 100 / price);
 
         vm.expectRevert("Sell is not allowed if you don't own shares");
-        market.createOrder(BuySell.SELL, YesNo.NO, LimitMarket.LIMIT, amount, price);
+        market.createOrder(BuySell.SELL, YesNo.NO, amount, price);
     }
 
     // SELL-NO-MARKET (should revert)
@@ -188,29 +164,29 @@ contract MarketTest is Test {
         amount = bound(amount, 1, 100 ether * 100 / price);
 
         vm.expectRevert("Sell is not allowed if you don't own shares");
-        market.createOrder(BuySell.SELL, YesNo.NO, LimitMarket.MARKET, amount, price);
+        market.createOrder(BuySell.SELL, YesNo.NO, amount, price);
     }
 
     // Test zero amount revert
     function test_Market_CreateOrder_ZeroAmount() public {
         vm.expectRevert("Amount must be greater than zero");
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 0, 100);
+        market.createOrder(BuySell.BUY, YesNo.YES, 0, 100);
     }
 
     // Test zero price revert
     function test_Market_CreateOrder_ZeroPrice() public {
         vm.expectRevert("Price must be greater than zero");
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 0);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 0);
     }
 
     // Test both zero amount and price (should revert with amount error first)
     function test_Market_CreateOrder_ZeroAmountAndPrice() public {
         vm.expectRevert("Amount must be greater than zero");
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 0, 0);
+        market.createOrder(BuySell.BUY, YesNo.YES, 0, 0);
     }
 
     function test_SellWithoutShares() public {
         vm.expectRevert("Sell is not allowed if you don't own shares");
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 10, 10);
+        market.createOrder(BuySell.SELL, YesNo.YES, 10, 10);
     }
 }

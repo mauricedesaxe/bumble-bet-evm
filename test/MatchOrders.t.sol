@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {Market, BuySell, LimitMarket, YesNo, OrderStatus, Order} from "../src/Market.sol";
+import {Market, BuySell, YesNo, OrderStatus, Order} from "../src/Market.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {MockERC20} from "../src/__mocks__/MockERC20.sol";
 
@@ -58,18 +58,18 @@ contract MatchOrdersTest is Test {
     function test_BuyBuy_YesNo_Match() public {
         // Alice creates a BUY order for YES
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
 
         // Bob creates a BUY order for NO
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 50);
 
         // Match orders
         market.matchOrders(alice, bob, 1, 1);
 
         // Verify orders are filled and shares are created
-        (,,,,,, OrderStatus status1) = market.orders(alice, 1);
-        (,,,,,, OrderStatus status2) = market.orders(bob, 1);
+        (,,,,, OrderStatus status1) = market.orders(alice, 1);
+        (,,,,, OrderStatus status2) = market.orders(bob, 1);
         assertEq(uint256(status1), uint256(OrderStatus.FILLED));
         assertEq(uint256(status2), uint256(OrderStatus.FILLED));
         assertEq(market.shares(alice, YesNo.YES), 100);
@@ -79,20 +79,20 @@ contract MatchOrdersTest is Test {
     function test_BuySell_YesYes_Match() public {
         // Bob creates a BUY order for YES
         vm.startPrank(bob);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 200, 60);
+        market.createOrder(BuySell.BUY, YesNo.YES, 200, 60);
         vm.stopPrank();
 
         // Charlie creates a BUY order for NO
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 200, 40);
+        market.createOrder(BuySell.BUY, YesNo.NO, 200, 40);
         vm.stopPrank();
 
         // Owner matches Bob with Charlie (both BUY orders) which creates shares out of thin air
         market.matchOrders(bob, charlie, 1, 1);
 
         // Verify orders are filled and shares are created
-        (,,,,,, OrderStatus status1) = market.orders(bob, 1);
-        (,,,,,, OrderStatus status2) = market.orders(charlie, 1);
+        (,,,,, OrderStatus status1) = market.orders(bob, 1);
+        (,,,,, OrderStatus status2) = market.orders(charlie, 1);
         assertEq(uint256(status1), uint256(OrderStatus.FILLED));
         assertEq(uint256(status2), uint256(OrderStatus.FILLED));
         assertEq(market.shares(bob, YesNo.YES), 200);
@@ -100,20 +100,20 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for YES
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Bob creates SELL order for half of his shares
         vm.prank(bob);
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.SELL, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Owner matches Alice with Bob (Alice BUY, Bob SELL)
         market.matchOrders(alice, bob, 1, 2);
 
         // Verify orders are filled and shares are created
-        (,,,,,, OrderStatus status3) = market.orders(alice, 1);
-        (,,,,,, OrderStatus status4) = market.orders(bob, 2);
+        (,,,,, OrderStatus status3) = market.orders(alice, 1);
+        (,,,,, OrderStatus status4) = market.orders(bob, 2);
         assertEq(uint256(status3), uint256(OrderStatus.FILLED));
         assertEq(uint256(status4), uint256(OrderStatus.FILLED));
         assertEq(market.shares(alice, YesNo.YES), 100);
@@ -123,12 +123,12 @@ contract MatchOrdersTest is Test {
     function test_BuySell_NoNo_Match() public {
         // Bob creates a BUY order for NO
         vm.startPrank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 200, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 200, 50);
         vm.stopPrank();
 
         // Charlie creates a BUY order for YES
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 200, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 200, 50);
         vm.stopPrank();
 
         // Owner matches Bob with Charlie (both BUY orders) which creates shares out of thin air
@@ -136,8 +136,8 @@ contract MatchOrdersTest is Test {
         market.matchOrders(charlie, bob, 1, 1);
 
         // Verify orders are filled and shares are created
-        (,,,,,, OrderStatus status1) = market.orders(bob, 1);
-        (,,,,,, OrderStatus status2) = market.orders(charlie, 1);
+        (,,,,, OrderStatus status1) = market.orders(bob, 1);
+        (,,,,, OrderStatus status2) = market.orders(charlie, 1);
         assertEq(uint256(status1), uint256(OrderStatus.FILLED));
         assertEq(uint256(status2), uint256(OrderStatus.FILLED));
         assertEq(market.shares(bob, YesNo.NO), 200);
@@ -145,20 +145,20 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for NO
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 50);
         vm.stopPrank();
 
         // Bob creates SELL order for half of his shares
         vm.prank(bob);
-        market.createOrder(BuySell.SELL, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.SELL, YesNo.NO, 100, 50);
         vm.stopPrank();
 
         // Owner matches Alice with Bob (Alice BUY, Bob SELL)
         market.matchOrders(alice, bob, 1, 2);
 
         // Verify share balances and orders are filled
-        (,,,,,, OrderStatus status3) = market.orders(alice, 1);
-        (,,,,,, OrderStatus status4) = market.orders(bob, 2);
+        (,,,,, OrderStatus status3) = market.orders(alice, 1);
+        (,,,,, OrderStatus status4) = market.orders(bob, 2);
         assertEq(uint256(status3), uint256(OrderStatus.FILLED));
         assertEq(uint256(status4), uint256(OrderStatus.FILLED));
         assertEq(market.shares(alice, YesNo.NO), 100);
@@ -172,12 +172,12 @@ contract MatchOrdersTest is Test {
     function test_PartialFill_BuySell_BuyerLarger() public {
         // Bob creates a BUY order for YES
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 150, 40);
+        market.createOrder(BuySell.BUY, YesNo.YES, 150, 40);
         vm.stopPrank();
 
         // Carol creates a BUY order for NO
         vm.prank(carol);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 150, 60);
+        market.createOrder(BuySell.BUY, YesNo.NO, 150, 60);
         vm.stopPrank();
 
         // Owner matches Bob with Carol (Bob BUY, Carol BUY) which creates shares out of thin air
@@ -185,24 +185,24 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Bob creates SELL order for 60 YES
         vm.prank(bob);
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 60, 50);
+        market.createOrder(BuySell.SELL, YesNo.YES, 60, 50);
         vm.stopPrank();
 
         // Owner matches Alice with Bob (Alice BUY, Bob SELL)
         market.matchOrders(alice, bob, 1, 2);
 
         // Buyer still needs 40 → order should stay PENDING w/ 40 left
-        (, uint256 remaining0,,,,, OrderStatus status0) = market.orders(alice, 1);
+        (, uint256 remaining0,,,, OrderStatus status0) = market.orders(alice, 1);
         assertEq(remaining0, 40, "Alice should have 40 YES shares remaining in her order");
         assertEq(uint256(status0), uint256(OrderStatus.PENDING), "Alice's order should be PENDING");
 
         // Seller completely filled → FILLED & no remaining
-        (, uint256 remaining1,,,,, OrderStatus status1) = market.orders(bob, 2);
+        (, uint256 remaining1,,,, OrderStatus status1) = market.orders(bob, 2);
         assertEq(remaining1, 0, "Bob should have 0 YES shares remaining in his order");
         assertEq(uint256(status1), uint256(OrderStatus.FILLED), "Bob's order should be FILLED");
 
@@ -214,24 +214,24 @@ contract MatchOrdersTest is Test {
     function test_PartialFill_BuyBuy_YesNo_Symmetric() public {
         // Alice creates a BUY order for 80 YES
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 80, 30);
+        market.createOrder(BuySell.BUY, YesNo.YES, 80, 30);
         vm.stopPrank();
 
         // Bob creates a BUY order for 200 NO
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 200, 70);
+        market.createOrder(BuySell.BUY, YesNo.NO, 200, 70);
         vm.stopPrank();
 
         // Owner matches Alice with Bob (Alice BUY, Bob BUY) which creates shares out of thin air
         market.matchOrders(alice, bob, 1, 1);
 
         // Alice completely filled
-        (, uint256 remaining0,,,,, OrderStatus status0) = market.orders(alice, 1);
+        (, uint256 remaining0,,,, OrderStatus status0) = market.orders(alice, 1);
         assertEq(remaining0, 0, "Alice should have 0 remaining shares in her order");
         assertEq(uint256(status0), uint256(OrderStatus.FILLED), "Alice's order should be FILLED");
 
         // Bob still has 120 NO to buy
-        (, uint256 remaining1,,,,, OrderStatus status1) = market.orders(bob, 1);
+        (, uint256 remaining1,,,, OrderStatus status1) = market.orders(bob, 1);
         assertEq(remaining1, 120, "Bob should have 120 NO shares remaining in his order");
         assertEq(uint256(status1), uint256(OrderStatus.PENDING), "Bob's order should be PENDING");
 
@@ -247,12 +247,12 @@ contract MatchOrdersTest is Test {
     function test_NonOwnerMatch() public {
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Bob creates a BUY order for 100 NO
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 50);
         vm.stopPrank();
 
         // Non-owner tries to match
@@ -264,12 +264,12 @@ contract MatchOrdersTest is Test {
     function test_SameUserMatch() public {
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Alice creates a BUY order for 100 NO
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 50);
         vm.stopPrank();
 
         // Should fail because same user
@@ -280,7 +280,7 @@ contract MatchOrdersTest is Test {
     function test_NonExistentOrder() public {
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Non-existent order
@@ -291,12 +291,12 @@ contract MatchOrdersTest is Test {
     function test_CancelledOrder() public {
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Bob creates a BUY order for 100 NO
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 50);
         vm.stopPrank();
 
         // Cancel Bob's order
@@ -312,12 +312,12 @@ contract MatchOrdersTest is Test {
     function test_IncompatibleOrders_YesNo() public {
         // Charlie creates a BUY order for Yes
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Bob creates a BUY order for No
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 50);
         vm.stopPrank();
 
         // Owner matches Bob with Charlie (Bob BUY, Charlie BUY) which creates shares out of thin air
@@ -329,12 +329,12 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Bob creates a SELL order for 100 NO
         vm.prank(bob);
-        market.createOrder(BuySell.SELL, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.SELL, YesNo.NO, 100, 50);
         vm.stopPrank();
 
         // Should fail - YES-NO in BUY-SELL
@@ -344,11 +344,11 @@ contract MatchOrdersTest is Test {
 
     function test_MatchAlreadyFilled() public {
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 10, 10);
+        market.createOrder(BuySell.BUY, YesNo.YES, 10, 10);
         vm.stopPrank();
 
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 10, 90);
+        market.createOrder(BuySell.BUY, YesNo.NO, 10, 90);
         vm.stopPrank();
 
         market.matchOrders(alice, bob, 1, 1);
@@ -390,12 +390,12 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for YES
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, amount1, yesPrice);
+        market.createOrder(BuySell.BUY, YesNo.YES, amount1, yesPrice);
         vm.stopPrank();
 
         // Bob creates a BUY order for NO
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, amount2, noPrice);
+        market.createOrder(BuySell.BUY, YesNo.NO, amount2, noPrice);
         vm.stopPrank();
 
         // Owner matches Alice with Bob (Alice BUY, Bob BUY)
@@ -413,12 +413,12 @@ contract MatchOrdersTest is Test {
     function test_BuySell_PriceMismatch_Reverts() public {
         // Bob creates a BUY order for YES at price 50
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Charlie creates a BUY order for NO at price 50
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 50);
         vm.stopPrank();
 
         // Owner matches Bob with Charlie (Bob BUY, Charlie BUY) which creates shares out of thin air
@@ -426,12 +426,12 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for YES at price 40
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 40);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 40);
         vm.stopPrank();
 
         // Bob creates a SELL order for YES at price 50
         vm.prank(bob);
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.SELL, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Owner tries to match - should revert with "BUY price below SELL price"
@@ -442,12 +442,12 @@ contract MatchOrdersTest is Test {
     function test_BuySell_BuyerHigherPrice_Succeeds() public {
         // Bob creates a BUY order for YES at price 50
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Charlie creates a BUY order for NO at price 50
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 50);
         vm.stopPrank();
 
         // Owner matches Bob with Charlie (Bob BUY, Charlie BUY) which creates shares out of thin air
@@ -455,20 +455,20 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for YES at higher price (70)
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 70);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 70);
         vm.stopPrank();
 
         // Bob creates a SELL order for YES at lower price (50)
         vm.prank(bob);
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.SELL, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Owner matches - should succeed even though prices differ
         market.matchOrders(alice, bob, 1, 2);
 
         // Verify orders are filled and shares transferred
-        (,,,,,, OrderStatus status1) = market.orders(alice, 1);
-        (,,,,,, OrderStatus status2) = market.orders(bob, 2);
+        (,,,,, OrderStatus status1) = market.orders(alice, 1);
+        (,,,,, OrderStatus status2) = market.orders(bob, 2);
         assertEq(uint256(status1), uint256(OrderStatus.FILLED));
         assertEq(uint256(status2), uint256(OrderStatus.FILLED));
         assertEq(market.shares(alice, YesNo.YES), 100);
@@ -478,12 +478,12 @@ contract MatchOrdersTest is Test {
     function test_BuyBuy_PriceSum_Invalid_Reverts() public {
         // Alice creates a BUY order for YES at price 60
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 60);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 60);
         vm.stopPrank();
 
         // Bob creates a BUY order for NO at price 60 (sum = 120)
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 60);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 60);
         vm.stopPrank();
 
         // Owner tries to match - should revert with "YES+NO prices must sum to 100"
@@ -494,20 +494,20 @@ contract MatchOrdersTest is Test {
     function test_BuyBuy_ExactPriceSum_Succeeds() public {
         // Alice creates a BUY order for YES at price 25
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 25);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 25);
         vm.stopPrank();
 
         // Bob creates a BUY order for NO at price 75 (sum = 100 exactly)
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 75);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 75);
         vm.stopPrank();
 
         // Owner tries to match - should succeed with exactly PRICE_UNIT sum
         market.matchOrders(alice, bob, 1, 1);
 
         // Verify orders are filled and shares created
-        (,,,,,, OrderStatus status1) = market.orders(alice, 1);
-        (,,,,,, OrderStatus status2) = market.orders(bob, 1);
+        (,,,,, OrderStatus status1) = market.orders(alice, 1);
+        (,,,,, OrderStatus status2) = market.orders(bob, 1);
         assertEq(uint256(status1), uint256(OrderStatus.FILLED));
         assertEq(uint256(status2), uint256(OrderStatus.FILLED));
         assertEq(market.shares(alice, YesNo.YES), 100);
@@ -517,12 +517,12 @@ contract MatchOrdersTest is Test {
     function test_BuyBuy_PriceSum_TooLow_Reverts() public {
         // Alice creates a BUY order for YES at price 30
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 30);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 30);
         vm.stopPrank();
 
         // Bob creates a BUY order for NO at price 60 (sum = 90 < 100)
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 60);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 60);
         vm.stopPrank();
 
         // Owner tries to match - should revert with "YES+NO prices must sum to 100"
@@ -533,12 +533,12 @@ contract MatchOrdersTest is Test {
     function test_PartialFill_WithPriceDifference() public {
         // Bob creates a BUY order for YES
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 150, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 150, 50);
         vm.stopPrank();
 
         // Charlie creates a BUY order for NO
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 150, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 150, 50);
         vm.stopPrank();
 
         // Owner matches Bob with Charlie (Bob BUY, Charlie BUY) which creates shares out of thin air
@@ -546,24 +546,24 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for 100 YES at price 80 (high price)
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 80);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 80);
         vm.stopPrank();
 
         // Bob creates SELL order for 60 YES at price 50 (lower price)
         vm.prank(bob);
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 60, 50);
+        market.createOrder(BuySell.SELL, YesNo.YES, 60, 50);
         vm.stopPrank();
 
         // Owner matches Alice with Bob (Alice BUY, Bob SELL)
         market.matchOrders(alice, bob, 1, 2);
 
         // Alice's order is partially filled - should remain PENDING with 40 remaining
-        (, uint256 remaining0,,,,, OrderStatus status0) = market.orders(alice, 1);
+        (, uint256 remaining0,,,, OrderStatus status0) = market.orders(alice, 1);
         assertEq(remaining0, 40);
         assertEq(uint256(status0), uint256(OrderStatus.PENDING));
 
         // Bob's order is fully filled
-        (,,,,,, OrderStatus status1) = market.orders(bob, 2);
+        (,,,,, OrderStatus status1) = market.orders(bob, 2);
         assertEq(uint256(status1), uint256(OrderStatus.FILLED));
 
         // Verify share balances
@@ -574,11 +574,11 @@ contract MatchOrdersTest is Test {
     function test_MinMaxPrice_EdgeCases() public {
         // Test with price 1 (minimum reasonable price)
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 1);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 1);
         vm.stopPrank();
 
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 99);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 99);
         vm.stopPrank();
 
         // Should succeed
@@ -586,11 +586,11 @@ contract MatchOrdersTest is Test {
 
         // Test with price 99 (maximum reasonable price)
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 99);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 99);
         vm.stopPrank();
 
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 1);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 1);
         vm.stopPrank();
 
         // Should succeed
@@ -604,12 +604,12 @@ contract MatchOrdersTest is Test {
     function test_BuySell_ExactPriceMatch_Succeeds() public {
         // Bob creates a BUY order for YES at price 50
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Charlie creates a BUY order for NO at price 50
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 50);
         vm.stopPrank();
 
         // Owner matches Bob with Charlie (Bob BUY, Charlie BUY) which creates shares out of thin air
@@ -617,20 +617,20 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for YES at exact same price as Bob's sell
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Bob creates a SELL order for YES at exactly the same price
         vm.prank(bob);
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.SELL, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Owner matches - should succeed with equal prices
         market.matchOrders(alice, bob, 1, 2);
 
         // Verify orders are filled and shares transferred
-        (,,,,,, OrderStatus status1) = market.orders(alice, 1);
-        (,,,,,, OrderStatus status2) = market.orders(bob, 2);
+        (,,,,, OrderStatus status1) = market.orders(alice, 1);
+        (,,,,, OrderStatus status2) = market.orders(bob, 2);
         assertEq(uint256(status1), uint256(OrderStatus.FILLED));
         assertEq(uint256(status2), uint256(OrderStatus.FILLED));
         assertEq(market.shares(alice, YesNo.YES), 100);
@@ -640,23 +640,23 @@ contract MatchOrdersTest is Test {
     function test_BuyBuy_UnequalAmounts_SmallerSideCaps() public {
         // Alice creates a BUY order for 100 YES at price 40
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 40);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 40);
         vm.stopPrank();
 
         // Bob creates a BUY order for 50 NO at price 60
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 50, 60);
+        market.createOrder(BuySell.BUY, YesNo.NO, 50, 60);
         vm.stopPrank();
 
         // Owner matches Alice with Bob (Alice BUY, Bob BUY) which creates shares out of thin air
         market.matchOrders(alice, bob, 1, 1);
 
         // Bob's order (smaller) should be FILLED
-        (,,,,,, OrderStatus status2) = market.orders(bob, 1);
+        (,,,,, OrderStatus status2) = market.orders(bob, 1);
         assertEq(uint256(status2), uint256(OrderStatus.FILLED));
 
         // Alice's order should be PENDING with 50 remaining
-        (, uint256 remaining1,,,,, OrderStatus status1) = market.orders(alice, 1);
+        (, uint256 remaining1,,,, OrderStatus status1) = market.orders(alice, 1);
         assertEq(remaining1, 50);
         assertEq(uint256(status1), uint256(OrderStatus.PENDING));
 
@@ -680,12 +680,12 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for YES at price 40 (cost: 100 * 40 / 100 = 40)
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 40);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 40);
         vm.stopPrank();
 
         // Bob creates a BUY order for NO at price 60 (cost: 100 * 60 / 100 = 60)
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 60);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 60);
         vm.stopPrank();
 
         // Match orders
@@ -712,11 +712,11 @@ contract MatchOrdersTest is Test {
     function test_BuySell_BalanceChanges() public {
         // Setup: Create initial shares through BuyBuy match
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 200, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 200, 50);
         vm.stopPrank();
 
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 200, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 200, 50);
         vm.stopPrank();
 
         market.matchOrders(bob, charlie, 1, 1);
@@ -728,12 +728,12 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for YES at price 60 (cost: 100 * 60 / 100 = 60)
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 60);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 60);
         vm.stopPrank();
 
         // Bob creates a SELL order for YES at price 50
         vm.prank(bob);
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.SELL, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         // Match orders
@@ -761,11 +761,11 @@ contract MatchOrdersTest is Test {
     function test_PartialFill_BalanceChanges() public {
         // Setup: Create initial shares
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 150, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 150, 50);
         vm.stopPrank();
 
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 150, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 150, 50);
         vm.stopPrank();
 
         market.matchOrders(bob, charlie, 1, 1);
@@ -777,12 +777,12 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for 100 YES at price 70 (cost: 100 * 70 / 100 = 70)
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 70);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 70);
         vm.stopPrank();
 
         // Bob creates SELL order for 60 YES at price 50
         vm.prank(bob);
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 60, 50);
+        market.createOrder(BuySell.SELL, YesNo.YES, 60, 50);
         vm.stopPrank();
 
         // Match orders (partial fill - only 60 out of 100 shares)
@@ -803,7 +803,7 @@ contract MatchOrdersTest is Test {
         assertEq(marketBalanceAfter, marketBalanceBefore + 40, "Market should hold Alice's full remaining escrow");
 
         // Verify partial fill
-        (, uint256 remaining,,,,, OrderStatus status) = market.orders(alice, 1);
+        (, uint256 remaining,,,, OrderStatus status) = market.orders(alice, 1);
         assertEq(remaining, 40, "Alice should have 40 shares remaining");
         assertEq(uint256(status), uint256(OrderStatus.PENDING));
     }
@@ -811,11 +811,11 @@ contract MatchOrdersTest is Test {
     function test_PriceDifference_RefundCalculation() public {
         // Setup: Create initial shares
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 50);
         vm.stopPrank();
 
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        market.createOrder(BuySell.BUY, YesNo.NO, 100, 50);
         vm.stopPrank();
 
         market.matchOrders(bob, charlie, 1, 1);
@@ -826,12 +826,12 @@ contract MatchOrdersTest is Test {
 
         // Alice creates a BUY order for YES at high price 90 (cost: 100 * 90 / 100 = 90)
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 90);
+        market.createOrder(BuySell.BUY, YesNo.YES, 100, 90);
         vm.stopPrank();
 
         // Bob creates a SELL order for YES at low price 30
         vm.prank(bob);
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 100, 30);
+        market.createOrder(BuySell.SELL, YesNo.YES, 100, 30);
         vm.stopPrank();
 
         // Match orders
@@ -855,11 +855,11 @@ contract MatchOrdersTest is Test {
 
         // Create multiple orders and match them
         vm.prank(alice);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 50, 40);
+        market.createOrder(BuySell.BUY, YesNo.YES, 50, 40);
         vm.stopPrank();
 
         vm.prank(bob);
-        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 50, 60);
+        market.createOrder(BuySell.BUY, YesNo.NO, 50, 60);
         vm.stopPrank();
 
         // First match: BuyBuy
@@ -867,11 +867,11 @@ contract MatchOrdersTest is Test {
 
         // Create second set of orders
         vm.prank(charlie);
-        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 30, 55);
+        market.createOrder(BuySell.BUY, YesNo.YES, 30, 55);
         vm.stopPrank();
 
         vm.prank(alice);
-        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 30, 45);
+        market.createOrder(BuySell.SELL, YesNo.YES, 30, 45);
         vm.stopPrank();
 
         // Second match: BuySell

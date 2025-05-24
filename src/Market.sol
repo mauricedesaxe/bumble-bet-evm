@@ -14,11 +14,6 @@ enum YesNo {
     NO
 }
 
-enum LimitMarket {
-    LIMIT,
-    MARKET
-}
-
 enum OrderStatus {
     PENDING,
     FILLED,
@@ -31,7 +26,6 @@ struct Order {
     uint256 price;
     BuySell side;
     YesNo yesNo;
-    LimitMarket limitMarket;
     OrderStatus status;
 }
 
@@ -59,9 +53,7 @@ contract Market {
         name = _name;
     }
 
-    function createOrder(BuySell _side, YesNo _yesNo, LimitMarket _limitMarket, uint256 _amount, uint256 _price)
-        public
-    {
+    function createOrder(BuySell _side, YesNo _yesNo, uint256 _amount, uint256 _price) public {
         if (_amount == 0) {
             revert("Amount must be greater than zero");
         }
@@ -93,7 +85,6 @@ contract Market {
             price: _price,
             side: _side,
             yesNo: _yesNo,
-            limitMarket: _limitMarket,
             status: OrderStatus.PENDING
         });
     }

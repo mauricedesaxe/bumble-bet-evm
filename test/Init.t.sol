@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {Market, BuySell, LimitMarket, YesNo, OrderStatus, Order} from "../src/Market.sol";
+import {Market, BuySell, YesNo, OrderStatus, Order} from "../src/Market.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {MockERC20} from "../src/__mocks__/MockERC20.sol";
 
