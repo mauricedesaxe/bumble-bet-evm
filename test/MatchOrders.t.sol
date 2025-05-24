@@ -668,4 +668,226 @@ contract MatchOrdersTest is Test {
         uint256 priceSum = 40 + 60;
         assertEq(priceSum, 100);
     }
+
+    /*────────────────────────
+        ► BALANCE TESTS
+    ────────────────────────*/
+
+    function test_BuyBuy_BalanceChanges() public {
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 marketBalanceBefore = token.balanceOf(address(market));
+
+        // Alice creates a BUY order for YES at price 40 (cost: 100 * 40 / 100 = 40)
+        vm.prank(alice);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 40);
+        vm.stopPrank();
+
+        // Bob creates a BUY order for NO at price 60 (cost: 100 * 60 / 100 = 60)
+        vm.prank(bob);
+        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 60);
+        vm.stopPrank();
+
+        // Match orders
+        market.matchOrders(alice, bob, 1, 1);
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 marketBalanceAfter = token.balanceOf(address(market));
+
+        // Alice should have paid 40 tokens
+        assertEq(aliceBalanceAfter, aliceBalanceBefore - 40, "Alice should have paid 40 tokens");
+
+        // Bob should have paid 60 tokens
+        assertEq(bobBalanceAfter, bobBalanceBefore - 60, "Bob should have paid 60 tokens");
+
+        // Market should hold 100 tokens total (40 + 60)
+        assertEq(marketBalanceAfter, marketBalanceBefore + 100, "Market should hold 100 tokens");
+
+        // Verify shares were created
+        assertEq(market.shares(alice, YesNo.YES), 100);
+        assertEq(market.shares(bob, YesNo.NO), 100);
+    }
+
+    function test_BuySell_BalanceChanges() public {
+        // Setup: Create initial shares through BuyBuy match
+        vm.prank(bob);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 200, 50);
+        vm.stopPrank();
+
+        vm.prank(charlie);
+        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 200, 50);
+        vm.stopPrank();
+
+        market.matchOrders(bob, charlie, 1, 1);
+
+        // Now test BuySell matching
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 marketBalanceBefore = token.balanceOf(address(market));
+
+        // Alice creates a BUY order for YES at price 60 (cost: 100 * 60 / 100 = 60)
+        vm.prank(alice);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 60);
+        vm.stopPrank();
+
+        // Bob creates a SELL order for YES at price 50
+        vm.prank(bob);
+        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        vm.stopPrank();
+
+        // Match orders
+        market.matchOrders(alice, bob, 1, 2);
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 marketBalanceAfter = token.balanceOf(address(market));
+
+        // Alice should have net payment of 50 (paid 60, got 10 refund)
+        assertEq(aliceBalanceAfter, aliceBalanceBefore - 50, "Alice should have net payment of 50 tokens");
+
+        // Bob should have received 50 tokens
+        assertEq(bobBalanceAfter, bobBalanceBefore + 50, "Bob should have received 50 tokens");
+
+        // Market balance: was marketBalanceBefore, Alice added 60, then market paid out 50 to Bob + 10 refund to Alice
+        // Net change: +60 -50 -10 = 0
+        assertEq(marketBalanceAfter, marketBalanceBefore, "Market balance should be unchanged");
+
+        // Verify shares transferred
+        assertEq(market.shares(alice, YesNo.YES), 100);
+        assertEq(market.shares(bob, YesNo.YES), 100); // 200 - 100
+    }
+
+    function test_PartialFill_BalanceChanges() public {
+        // Setup: Create initial shares
+        vm.prank(bob);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 150, 50);
+        vm.stopPrank();
+
+        vm.prank(charlie);
+        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 150, 50);
+        vm.stopPrank();
+
+        market.matchOrders(bob, charlie, 1, 1);
+
+        // Test partial fill balances
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 marketBalanceBefore = token.balanceOf(address(market));
+
+        // Alice creates a BUY order for 100 YES at price 70 (cost: 100 * 70 / 100 = 70)
+        vm.prank(alice);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 70);
+        vm.stopPrank();
+
+        // Bob creates SELL order for 60 YES at price 50
+        vm.prank(bob);
+        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 60, 50);
+        vm.stopPrank();
+
+        // Match orders (partial fill - only 60 out of 100 shares)
+        market.matchOrders(alice, bob, 1, 2);
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 marketBalanceAfter = token.balanceOf(address(market));
+
+        // Alice paid 70 total when creating order
+        assertEq(aliceBalanceAfter, aliceBalanceBefore - 70, "Alice should have paid 70 tokens total");
+
+        // Bob should have received 30 tokens (60 * 50 / 100)
+        assertEq(bobBalanceAfter, bobBalanceBefore + 30, "Bob should have received 30 tokens");
+
+        // Market: Alice added 70, paid out 30 to Bob, NO REFUND to Alice since order is still PENDING
+        // Net change: +70 -30 = +40
+        assertEq(marketBalanceAfter, marketBalanceBefore + 40, "Market should hold Alice's full remaining escrow");
+
+        // Verify partial fill
+        (, uint256 remaining,,,,, OrderStatus status) = market.orders(alice, 1);
+        assertEq(remaining, 40, "Alice should have 40 shares remaining");
+        assertEq(uint256(status), uint256(OrderStatus.PENDING));
+    }
+
+    function test_PriceDifference_RefundCalculation() public {
+        // Setup: Create initial shares
+        vm.prank(bob);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 50);
+        vm.stopPrank();
+
+        vm.prank(charlie);
+        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 100, 50);
+        vm.stopPrank();
+
+        market.matchOrders(bob, charlie, 1, 1);
+
+        // Test large price difference
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+
+        // Alice creates a BUY order for YES at high price 90 (cost: 100 * 90 / 100 = 90)
+        vm.prank(alice);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 100, 90);
+        vm.stopPrank();
+
+        // Bob creates a SELL order for YES at low price 30
+        vm.prank(bob);
+        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 100, 30);
+        vm.stopPrank();
+
+        // Match orders
+        market.matchOrders(alice, bob, 1, 2);
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+
+        // Alice should pay seller's price (30) and get refund (60)
+        // Net: Alice paid 90, got back 60, so net payment = 30
+        assertEq(aliceBalanceAfter, aliceBalanceBefore - 30, "Alice should have net payment of 30");
+
+        // Bob should receive 30 tokens
+        assertEq(bobBalanceAfter, bobBalanceBefore + 30, "Bob should have received 30 tokens");
+    }
+
+    function test_MultipleMatches_CumulativeBalances() public {
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 charlieBalanceBefore = token.balanceOf(charlie);
+
+        // Create multiple orders and match them
+        vm.prank(alice);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 50, 40);
+        vm.stopPrank();
+
+        vm.prank(bob);
+        market.createOrder(BuySell.BUY, YesNo.NO, LimitMarket.LIMIT, 50, 60);
+        vm.stopPrank();
+
+        // First match: BuyBuy
+        market.matchOrders(alice, bob, 1, 1);
+
+        // Create second set of orders
+        vm.prank(charlie);
+        market.createOrder(BuySell.BUY, YesNo.YES, LimitMarket.LIMIT, 30, 55);
+        vm.stopPrank();
+
+        vm.prank(alice);
+        market.createOrder(BuySell.SELL, YesNo.YES, LimitMarket.LIMIT, 30, 45);
+        vm.stopPrank();
+
+        // Second match: BuySell
+        market.matchOrders(charlie, alice, 1, 2);
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 charlieBalanceAfter = token.balanceOf(charlie);
+
+        // Alice: paid 20 (50*40/100), received 13 (30*45/100), net: -7
+        assertEq(aliceBalanceAfter, aliceBalanceBefore - 20 + 13, "Alice net: paid 20, received 13");
+
+        // Bob: paid 30 (50*60/100)
+        assertEq(bobBalanceAfter, bobBalanceBefore - 30, "Bob should have paid 30");
+
+        // Charlie: paid 16 (30*55/100), got 3 refund (30*(55-45)/100), net: -13
+        assertEq(charlieBalanceAfter, charlieBalanceBefore - 13, "Charlie net payment should be 13");
+    }
 }
