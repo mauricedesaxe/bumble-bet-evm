@@ -57,6 +57,27 @@ contract Market {
     }
 
     /**
+     * @notice Convert amount and price to shares
+     * @param _shares The amount of shares to buy or sell
+     * @param _price The price of the shares (can extrapolate to chance: 100 = 100%)
+     * @return The amount of tokens you would get for the amount and price
+     */
+    function _convertAmountAndPriceToTokens(uint256 _shares, uint256 _price) internal pure returns (uint256) {
+        if (_shares == 0) {
+            revert("Amount must be greater than zero");
+        }
+
+        if (_price == 0) {
+            revert("Price must be greater than zero");
+        }
+        if (_price > 100) {
+            revert("Price must be less than or equal to 100");
+        }
+
+        return (_shares * _price) / 100;
+    }
+
+    /**
      * @notice Set the name of the market if you need to change it later.
      * @param _name The new name of the market
      */
@@ -82,7 +103,7 @@ contract Market {
             revert("Price must be greater than zero");
         }
 
-        uint256 totalCost = _amount * _price / 100;
+        uint256 totalCost = _convertAmountAndPriceToTokens(_amount, _price);
 
         if (_side == OrderSide.BUY) {
             // Check if buyer has enough token balance
@@ -127,7 +148,7 @@ contract Market {
 
         // Return escrowed funds if it was a buy order
         if (order.side == OrderSide.BUY) {
-            uint256 refundAmount = order.amount * order.price / 100;
+            uint256 refundAmount = _convertAmountAndPriceToTokens(order.amount, order.price);
             paymentToken.transfer(msg.sender, refundAmount);
         }
 
@@ -198,7 +219,7 @@ contract Market {
             }
 
             // Transfer payment to seller
-            uint256 payment = minAmount * order2.price / 100; // Use seller's price
+            uint256 payment = _convertAmountAndPriceToTokens(minAmount, order2.price); // Use seller's price
             paymentToken.transfer(order2.user, payment);
 
             // Transfer shares
@@ -214,7 +235,7 @@ contract Market {
                 // Refund excess to buyer if price difference and order is filled
                 uint256 excessPrice = order1.price - order2.price;
                 if (excessPrice > 0) {
-                    uint256 refund = minAmount * excessPrice / 100;
+                    uint256 refund = _convertAmountAndPriceToTokens(minAmount, excessPrice);
                     if (refund > 0) {
                         paymentToken.transfer(order1.user, refund);
                     }
@@ -227,7 +248,7 @@ contract Market {
                 // Refund excess to buyer if price difference and order is filled
                 uint256 excessPrice = order1.price - order2.price;
                 if (excessPrice > 0) {
-                    uint256 refund = minAmount * excessPrice / 100;
+                    uint256 refund = _convertAmountAndPriceToTokens(minAmount, excessPrice);
                     if (refund > 0) {
                         paymentToken.transfer(order1.user, refund);
                     }
