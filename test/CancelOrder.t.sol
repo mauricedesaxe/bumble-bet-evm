@@ -6,7 +6,7 @@ import {Market, OrderSide, MarketOutcome, OrderStatus, Order} from "../src/Marke
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {MockERC20} from "../src/__mocks__/MockERC20.sol";
 
-contract MarketTest is Test {
+contract CancelOrderTest is Test {
     IERC20 public token;
     Market public market;
 
