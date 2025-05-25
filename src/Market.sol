@@ -88,23 +88,26 @@ contract Market {
         view
         returns (uint256)
     {
-        // 1. Calculate the cost in share decimal units
+        // Calculate the cost in share decimal units
         uint256 costInShareDecimals = (_shareAmount * _priceInBasisPoints) / BASIS_POINTS;
 
-        // 2. Convert to payment token decimals
+        // Convert to payment token decimals
+        uint256 costInPaymentTokens;
         if (SHARE_DECIMALS > paymentTokenDecimals) {
-            return costInShareDecimals / (10 ** (SHARE_DECIMALS - paymentTokenDecimals));
+            costInPaymentTokens = costInShareDecimals / (10 ** (SHARE_DECIMALS - paymentTokenDecimals));
         } else if (SHARE_DECIMALS < paymentTokenDecimals) {
-            return costInShareDecimals * (10 ** (paymentTokenDecimals - SHARE_DECIMALS));
+            costInPaymentTokens = costInShareDecimals * (10 ** (paymentTokenDecimals - SHARE_DECIMALS));
+        } else {
+            costInPaymentTokens = costInShareDecimals;
         }
 
-        // 3. Reverse as a sanity check
-        uint256 reverse = paymentTokensToShares(costInShareDecimals, _priceInBasisPoints);
+        // Reverse as a sanity check
+        uint256 reverse = paymentTokensToShares(costInPaymentTokens, _priceInBasisPoints);
         if (reverse != _shareAmount) {
             revert("Reverse calculation does not match");
         }
 
-        return costInShareDecimals;
+        return costInPaymentTokens;
     }
 
     /**
@@ -120,7 +123,7 @@ contract Market {
     {
         require(_priceInBasisPoints > 0, "Price must be greater than 0");
 
-        // 1. Convert payment token amount to share decimals
+        // Convert payment token amount to share decimals
         uint256 amountInShareDecimals;
         if (SHARE_DECIMALS > paymentTokenDecimals) {
             amountInShareDecimals = _paymentTokenAmount * (10 ** (SHARE_DECIMALS - paymentTokenDecimals));
@@ -130,8 +133,7 @@ contract Market {
             amountInShareDecimals = _paymentTokenAmount;
         }
 
-        // 2. Calculate shares: shares = (paymentAmount * BASIS_POINTS) / price
-        // This reverses: paymentAmount = (shares * price) / BASIS_POINTS
+        // Calculate shares: shares = (paymentAmount * BASIS_POINTS) / price
         return (amountInShareDecimals * BASIS_POINTS) / _priceInBasisPoints;
     }
 
