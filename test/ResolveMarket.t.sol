@@ -55,14 +55,14 @@ contract MarketTest is Test {
     function test_Market_resolveMarket() public {
         uint256 marketBalanceBefore = token.balanceOf(address(market));
 
-        // Alice creates a BUY order for YES
+        // Alice creates a BUY order for YES at 50% (5000 basis points)
         vm.prank(alice);
-        market.createOrder(OrderSide.BUY, MarketOutcome.YES, 100, 50);
+        market.createOrder(OrderSide.BUY, MarketOutcome.YES, 100 ether, 5000);
         vm.stopPrank();
 
-        // Bob creates a BUY order for NO
+        // Bob creates a BUY order for NO at 50% (5000 basis points)
         vm.prank(bob);
-        market.createOrder(OrderSide.BUY, MarketOutcome.NO, 100, 50);
+        market.createOrder(OrderSide.BUY, MarketOutcome.NO, 100 ether, 5000);
         vm.stopPrank();
 
         // Match orders

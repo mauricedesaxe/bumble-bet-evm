@@ -44,6 +44,9 @@ contract Market {
     address public owner;
     IERC20 public paymentToken;
 
+    // Constants for price precision
+    uint256 public constant BASIS_POINTS = 100_00; // 100% = 100_00 basis points
+
     mapping(address => uint256) public orderCount;
     mapping(address => mapping(uint256 => Order)) public orders;
     mapping(address => mapping(MarketOutcome => uint256)) public shares;
@@ -74,8 +77,8 @@ contract Market {
      * @notice Create an order to buy or sell shares of a market outcome.
      * @param _side The side of the order (buy or sell)
      * @param _outcome The outcome of the market (yes or no)
-     * @param _amount The amount of shares to buy or sell
-     * @param _price The price of the shares
+     * @param _amount The amount of shares to buy or sell (in share units with 18 decimals)
+     * @param _price The price of the shares in basis points (0-10000, where 10000 = 100%)
      */
     function createOrder(OrderSide _side, MarketOutcome _outcome, uint256 _amount, uint256 _price) public {
         if (resolved) {
@@ -85,11 +88,14 @@ contract Market {
         if (_amount == 0) {
             revert("Amount must be greater than zero");
         }
-        if (_price == 0) {
-            revert("Price must be greater than zero");
+        if (_price == 0 || _price > BASIS_POINTS) {
+            revert("Price must be between 1 and 10000 basis points");
         }
 
-        uint256 totalCost = _amount * _price / 100;
+        // Calculate total cost in payment tokens
+        // totalCost = (amount * price) / BASIS_POINTS
+        // This gives us the cost in payment tokens with proper decimals
+        uint256 totalCost = (_amount * _price) / BASIS_POINTS;
 
         if (_side == OrderSide.BUY) {
             // Check if buyer has enough token balance
@@ -134,7 +140,7 @@ contract Market {
 
         // Return escrowed funds if it was a buy order
         if (order.side == OrderSide.BUY) {
-            uint256 refundAmount = order.amount * order.price / 100;
+            uint256 refundAmount = (order.amount * order.price) / BASIS_POINTS;
             paymentToken.transfer(msg.sender, refundAmount);
         }
 
@@ -154,7 +160,7 @@ contract Market {
      *    - BUY-SELL: Requires order1=BUY, order2=SELL with same outcome (YES-YES or NO-NO).
      *      Validates seller has shares, buyer price >= seller price, transfers payment to seller,
      *      transfers shares to buyer, refunds excess escrow to buyer if price difference exists.
-     *    - BUY-BUY: Requires opposite outcomes (order1=YES, order2=NO) and prices must sum to 100.
+     *    - BUY-BUY: Requires opposite outcomes (order1=YES, order2=NO) and prices must sum to BASIS_POINTS.
      *      Creates new shares for both users (both have already paid into escrow when creating orders).
      * 5. Update order amounts and set status to FILLED if fully matched
      * 6. Handle partial fills by keeping remaining amounts in escrow for future matches
@@ -208,8 +214,8 @@ contract Market {
                 revert("BUY price below SELL price");
             }
 
-            // Transfer payment to seller
-            uint256 payment = minAmount * order2.price / 100; // Use seller's price
+            // Transfer payment to seller using seller's price
+            uint256 payment = (minAmount * order2.price) / BASIS_POINTS;
             paymentToken.transfer(order2.user, payment);
 
             // Transfer shares
@@ -225,7 +231,7 @@ contract Market {
                 // Refund excess to buyer if price difference and order is filled
                 uint256 excessPrice = order1.price - order2.price;
                 if (excessPrice > 0) {
-                    uint256 refund = minAmount * excessPrice / 100;
+                    uint256 refund = (minAmount * excessPrice) / BASIS_POINTS;
                     if (refund > 0) {
                         paymentToken.transfer(order1.user, refund);
                     }
@@ -238,7 +244,7 @@ contract Market {
                 // Refund excess to buyer if price difference and order is filled
                 uint256 excessPrice = order1.price - order2.price;
                 if (excessPrice > 0) {
-                    uint256 refund = minAmount * excessPrice / 100;
+                    uint256 refund = (minAmount * excessPrice) / BASIS_POINTS;
                     if (refund > 0) {
                         paymentToken.transfer(order1.user, refund);
                     }
@@ -255,9 +261,9 @@ contract Market {
                 revert("Need to be yes-no to match buy-buy orders");
             }
 
-            // Price check for BUY-BUY orders
-            if (order1.price + order2.price != 100) {
-                revert("YES+NO prices must sum to 100");
+            // Price check for BUY-BUY orders - prices must sum to BASIS_POINTS
+            if (order1.price + order2.price != BASIS_POINTS) {
+                revert("YES+NO prices must sum to 10000 basis points");
             }
 
             // Both orders have already paid into escrow, so no further transfers needed
@@ -310,6 +316,7 @@ contract Market {
     /**
      * @notice Claim the outcome of the market.
      * @dev This is called by the user to claim their shares after the market is resolved.
+     * @dev Winning shares are redeemed 1:1 for payment tokens
      */
     function claim() public {
         if (!resolved) {
@@ -324,6 +331,7 @@ contract Market {
         shares[msg.sender][MarketOutcome.YES] = 0;
         shares[msg.sender][MarketOutcome.NO] = 0;
 
+        // Winning shares are redeemed 1:1 for payment tokens
         paymentToken.transfer(msg.sender, winningShares);
     }
 }
