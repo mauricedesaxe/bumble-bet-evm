@@ -11,7 +11,7 @@ contract MarketTest is Test {
     Market public market;
 
     function setUp() public {
-        token = IERC20(address(new MockERC20("Token", "TKN")));
+        token = IERC20(address(new MockERC20("Token", "TKN", 6)));
         market = new Market("Market", address(token));
 
         // Set up token balances
@@ -45,8 +45,12 @@ contract MarketTest is Test {
     // Fuzz test with different order parameters
     function testFuzz_Market_CancelOrder(uint256 amount, uint256 price) public {
         // Limit values to reasonable ranges to avoid overflow and insufficient balance
-        price = bound(price, 1, 99); // 100%
-        amount = bound(amount, 1, 100 ether * 100 / price);
+        price = bound(price, 1, 99);
+        // Calculate max amount based on available balance and price
+        // We have 100 * 10^18 tokens, need to ensure amount * price * 10^6 / 100 <= balance
+        // So amount <= balance * 100 / (price * 10^6)
+        uint256 maxAmount = (token.balanceOf(address(this)) * 100) / (price * 10 ** token.decimals());
+        amount = bound(amount, 1, maxAmount);
 
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 marketBalanceBefore = token.balanceOf(address(market));
@@ -82,9 +86,11 @@ contract MarketTest is Test {
         uint256 balanceAfter = token.balanceOf(address(this));
         uint256 marketBalanceAfter = token.balanceOf(address(market));
 
-        // Order 2 is still pending, so its cost (200 * 75 / 100 = 150) should still be in escrow
-        uint256 expectedBalance = balanceBefore - (200 * 75 / 100);
-        uint256 expectedMarketBalance = marketBalanceBefore + (200 * 75 / 100);
+        // Order 2 is still pending, so its cost should still be in escrow
+        // Using the same calculation as the contract: shares * price * 10^decimals / 100
+        uint256 order2Cost = (200 * 75 * 10 ** token.decimals()) / 100;
+        uint256 expectedBalance = balanceBefore - order2Cost;
+        uint256 expectedMarketBalance = marketBalanceBefore + order2Cost;
 
         assertEq(balanceAfter, expectedBalance);
         assertEq(marketBalanceAfter, expectedMarketBalance);
