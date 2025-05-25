@@ -106,6 +106,10 @@ contract Market {
      * @param _price The price of the shares
      */
     function createOrder(OrderSide _side, MarketOutcome _outcome, uint256 _shares, uint256 _price) public {
+        if (resolved) {
+            revert("Market is resolved");
+        }
+
         if (_shares == 0) {
             revert("Amount must be greater than zero");
         }
@@ -189,6 +193,10 @@ contract Market {
      * @param _orderId2 The id of the second order
      */
     function matchOrders(address _user1, address _user2, uint256 _orderId1, uint256 _orderId2) public {
+        if (resolved) {
+            revert("Market is resolved");
+        }
+
         if (msg.sender != owner) {
             revert("Only the owner can match orders");
         }
