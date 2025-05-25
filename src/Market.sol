@@ -61,11 +61,13 @@ contract Market {
 
     /**
      * @notice Convert shares and price to token amount
-     * @param _shares The amount of shares to buy or sell
-     * @param _price The price of the shares (can extrapolate to chance: 100 = 100%)
-     * @return The amount of tokens you would get for the amount and price
+     * @param _shares The number of shares to buy or sell
+     * @param _price The price per share in cents (0-100, where 1% = 1 cent when using USD stablecoins)
+     * @return The amount of tokens needed, accounting for token decimals
+     * @dev When using USD stablecoins: price of 50 = 50 cents per share = $0.50 per share = 50% chance of your outcome
+     * @dev At market resolution, winning shares pay out $1.00 (100 cents) each
      */
-    function _convertAmountAndPriceToTokens(uint256 _shares, uint256 _price) internal pure returns (uint256) {
+    function _convertAmountAndPriceToTokens(uint256 _shares, uint256 _price) internal view returns (uint256) {
         if (_shares == 0) {
             revert("Amount must be greater than zero");
         }
@@ -77,7 +79,10 @@ contract Market {
             revert("Price must be less than or equal to 100");
         }
 
-        return (_shares * _price) / 100;
+        // Account for token decimals: shares * price * 10^decimals / 100
+        // E.g.: 100 shares * 50 cents/% * 10^6 / 100 = 50 * 10^6 = 50,000,000 cents = 50.000000 USDC
+        // E.g.: 100 shares * 50 cents/% * 10^18 / 100 = 50 * 10^18 = 5E19 cents = 50.000000000000000000 DAI
+        return (_shares * _price * (10 ** tokenDecimals)) / 100;
     }
 
     /**
