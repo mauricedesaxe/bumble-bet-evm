@@ -51,6 +51,7 @@ contract Market {
     mapping(address => mapping(MarketOutcome => uint256)) public shares;
 
     bool public resolved;
+    MarketOutcome public outcome;
 
     // TODO: events
 
@@ -317,5 +318,23 @@ contract Market {
         }
     }
 
-    // TODO: market resolution
+    /**
+     * @notice Resolve the market.
+     * @dev This is called by the owner to resolve the market.
+     * @param _outcome The outcome of the market (yes or no)
+     */
+    function resolveMarket(MarketOutcome _outcome) public {
+        if (resolved) {
+            revert("Market is already resolved");
+        }
+
+        if (msg.sender != owner) {
+            revert("Only the owner can resolve the market");
+        }
+
+        resolved = true;
+        outcome = _outcome;
+    }
+
+    // TODO: claim winnings
 }
