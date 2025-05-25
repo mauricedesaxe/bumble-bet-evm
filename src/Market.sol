@@ -336,5 +336,25 @@ contract Market {
         outcome = _outcome;
     }
 
-    // TODO: claim winnings
+    /**
+     * @notice Claim the outcome of the market.
+     * @dev This is called by the user to claim their shares after the market is resolved.
+     */
+    function claim() public {
+        if (!resolved) {
+            revert("Market is not resolved");
+        }
+
+        uint256 winningShares = shares[msg.sender][outcome];
+
+        shares[msg.sender][MarketOutcome.YES] = 0;
+        shares[msg.sender][MarketOutcome.NO] = 0;
+
+        // Only transfer tokens if winner, but allow losers to claim so they clear their shares
+        if (winningShares > 0) {
+            // Winning shares pay out at 100 cents ($1.00) each
+            uint256 payout = winningShares * (10 ** tokenDecimals);
+            paymentToken.transfer(msg.sender, payout);
+        }
+    }
 }
