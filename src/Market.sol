@@ -22,7 +22,7 @@ enum OrderStatus {
 
 struct Order {
     address user;
-    uint256 amount;
+    uint256 shares;
     uint256 price;
     OrderSide side;
     MarketOutcome yesNo;
@@ -57,7 +57,7 @@ contract Market {
     }
 
     /**
-     * @notice Convert amount and price to shares
+     * @notice Convert shares and price to token amount
      * @param _shares The amount of shares to buy or sell
      * @param _price The price of the shares (can extrapolate to chance: 100 = 100%)
      * @return The amount of tokens you would get for the amount and price
@@ -92,18 +92,18 @@ contract Market {
      * @notice Create an order to buy or sell shares of a market outcome.
      * @param _side The side of the order (buy or sell)
      * @param _outcome The outcome of the market (yes or no)
-     * @param _amount The amount of shares to buy or sell
+     * @param _shares The amount of shares to buy or sell
      * @param _price The price of the shares
      */
-    function createOrder(OrderSide _side, MarketOutcome _outcome, uint256 _amount, uint256 _price) public {
-        if (_amount == 0) {
+    function createOrder(OrderSide _side, MarketOutcome _outcome, uint256 _shares, uint256 _price) public {
+        if (_shares == 0) {
             revert("Amount must be greater than zero");
         }
         if (_price == 0) {
             revert("Price must be greater than zero");
         }
 
-        uint256 totalCost = _convertAmountAndPriceToTokens(_amount, _price);
+        uint256 totalCost = _convertAmountAndPriceToTokens(_shares, _price);
 
         if (_side == OrderSide.BUY) {
             // Check if buyer has enough token balance
@@ -115,7 +115,7 @@ contract Market {
             paymentToken.transferFrom(msg.sender, address(this), totalCost);
         } else if (_side == OrderSide.SELL) {
             // check if user does have the shares to sell
-            if (shares[msg.sender][_outcome] < _amount) {
+            if (shares[msg.sender][_outcome] < _shares) {
                 revert("Sell is not allowed if you don't own shares");
             }
         }
@@ -123,7 +123,7 @@ contract Market {
         orderCount[msg.sender]++;
         orders[msg.sender][orderCount[msg.sender]] = Order({
             user: msg.sender,
-            amount: _amount,
+            shares: _shares,
             price: _price,
             side: _side,
             yesNo: _outcome,
@@ -148,7 +148,7 @@ contract Market {
 
         // Return escrowed funds if it was a buy order
         if (order.side == OrderSide.BUY) {
-            uint256 refundAmount = _convertAmountAndPriceToTokens(order.amount, order.price);
+            uint256 refundAmount = _convertAmountAndPriceToTokens(order.shares, order.price);
             paymentToken.transfer(msg.sender, refundAmount);
         }
 
@@ -197,10 +197,10 @@ contract Market {
             revert("Cannot match non-pending orders");
         }
 
-        uint256 minAmount = order1.amount < order2.amount ? order1.amount : order2.amount;
-        uint256 maxAmount = order1.amount > order2.amount ? order1.amount : order2.amount;
+        uint256 minShares = order1.shares < order2.shares ? order1.shares : order2.shares;
+        uint256 maxShares = order1.shares > order2.shares ? order1.shares : order2.shares;
 
-        if (minAmount == 0 || maxAmount == 0) {
+        if (minShares == 0 || maxShares == 0) {
             revert("Cannot match orders with zero amount");
         }
 
@@ -209,7 +209,7 @@ contract Market {
                 revert("Need to be yes-yes or no-no to match buy-sell orders");
             }
 
-            if (shares[order2.user][order2.yesNo] < minAmount) {
+            if (shares[order2.user][order2.yesNo] < minShares) {
                 revert("Seller does not have enough shares");
             }
 
@@ -219,44 +219,44 @@ contract Market {
             }
 
             // Transfer payment to seller
-            uint256 payment = _convertAmountAndPriceToTokens(minAmount, order2.price); // Use seller's price
+            uint256 payment = _convertAmountAndPriceToTokens(minShares, order2.price); // Use seller's price
             paymentToken.transfer(order2.user, payment);
 
             // Transfer shares
-            shares[order1.user][order1.yesNo] += minAmount;
-            shares[order2.user][order2.yesNo] -= minAmount;
+            shares[order1.user][order1.yesNo] += minShares;
+            shares[order2.user][order2.yesNo] -= minShares;
 
-            if (minAmount == maxAmount) {
+            if (minShares == maxShares) {
                 order1.status = OrderStatus.FILLED;
                 order2.status = OrderStatus.FILLED;
-                order1.amount = 0;
-                order2.amount = 0;
+                order1.shares = 0;
+                order2.shares = 0;
 
                 // Refund excess to buyer if price difference and order is filled
                 uint256 excessPrice = order1.price - order2.price;
                 if (excessPrice > 0) {
-                    uint256 refund = _convertAmountAndPriceToTokens(minAmount, excessPrice);
+                    uint256 refund = _convertAmountAndPriceToTokens(minShares, excessPrice);
                     if (refund > 0) {
                         paymentToken.transfer(order1.user, refund);
                     }
                 }
-            } else if (minAmount == order1.amount) {
+            } else if (minShares == order1.shares) {
                 order1.status = OrderStatus.FILLED;
-                order1.amount = 0;
-                order2.amount -= minAmount;
+                order1.shares = 0;
+                order2.shares -= minShares;
 
                 // Refund excess to buyer if price difference and order is filled
                 uint256 excessPrice = order1.price - order2.price;
                 if (excessPrice > 0) {
-                    uint256 refund = _convertAmountAndPriceToTokens(minAmount, excessPrice);
+                    uint256 refund = _convertAmountAndPriceToTokens(minShares, excessPrice);
                     if (refund > 0) {
                         paymentToken.transfer(order1.user, refund);
                     }
                 }
             } else {
                 order2.status = OrderStatus.FILLED;
-                order2.amount = 0;
-                order1.amount -= minAmount;
+                order2.shares = 0;
+                order1.shares -= minShares;
 
                 // Keep the rest of buyer's payment in escrow for future matches
             }
@@ -273,24 +273,24 @@ contract Market {
             // Both orders have already paid into escrow, so no further transfers needed
 
             // Create shares
-            shares[order1.user][order1.yesNo] += minAmount;
-            shares[order2.user][order2.yesNo] += minAmount;
+            shares[order1.user][order1.yesNo] += minShares;
+            shares[order2.user][order2.yesNo] += minShares;
 
-            if (minAmount == maxAmount) {
+            if (minShares == maxShares) {
                 order1.status = OrderStatus.FILLED;
                 order2.status = OrderStatus.FILLED;
-                order1.amount = 0;
-                order2.amount = 0;
-            } else if (minAmount == order1.amount) {
+                order1.shares = 0;
+                order2.shares = 0;
+            } else if (minShares == order1.shares) {
                 order1.status = OrderStatus.FILLED;
-                order1.amount = 0;
-                order2.amount -= minAmount;
+                order1.shares = 0;
+                order2.shares -= minShares;
 
                 // Keep the rest of buyer's payment in escrow for future matches
             } else {
                 order2.status = OrderStatus.FILLED;
-                order2.amount = 0;
-                order1.amount -= minAmount;
+                order2.shares = 0;
+                order1.shares -= minShares;
 
                 // Keep the rest of buyer's payment in escrow for future matches
             }
