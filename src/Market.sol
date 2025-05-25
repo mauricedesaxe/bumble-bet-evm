@@ -98,7 +98,41 @@ contract Market {
             return costInShareDecimals * (10 ** (paymentTokenDecimals - SHARE_DECIMALS));
         }
 
+        // 3. Reverse as a sanity check
+        uint256 reverse = paymentTokensToShares(costInShareDecimals, _priceInBasisPoints);
+        if (reverse != _shareAmount) {
+            revert("Reverse calculation does not match");
+        }
+
         return costInShareDecimals;
+    }
+
+    /**
+     * @notice Convert payment token amounts to share amounts given a price
+     * @param _paymentTokenAmount The amount of payment tokens (paymentTokenDecimals decimals)
+     * @param _priceInBasisPoints The price in basis points (0-10000)
+     * @return The amount of shares (18 decimals)
+     */
+    function paymentTokensToShares(uint256 _paymentTokenAmount, uint256 _priceInBasisPoints)
+        internal
+        view
+        returns (uint256)
+    {
+        require(_priceInBasisPoints > 0, "Price must be greater than 0");
+
+        // 1. Convert payment token amount to share decimals
+        uint256 amountInShareDecimals;
+        if (SHARE_DECIMALS > paymentTokenDecimals) {
+            amountInShareDecimals = _paymentTokenAmount * (10 ** (SHARE_DECIMALS - paymentTokenDecimals));
+        } else if (SHARE_DECIMALS < paymentTokenDecimals) {
+            amountInShareDecimals = _paymentTokenAmount / (10 ** (paymentTokenDecimals - SHARE_DECIMALS));
+        } else {
+            amountInShareDecimals = _paymentTokenAmount;
+        }
+
+        // 2. Calculate shares: shares = (paymentAmount * BASIS_POINTS) / price
+        // This reverses: paymentAmount = (shares * price) / BASIS_POINTS
+        return (amountInShareDecimals * BASIS_POINTS) / _priceInBasisPoints;
     }
 
     /**
