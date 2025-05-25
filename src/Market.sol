@@ -88,6 +88,13 @@ contract Market {
         view
         returns (uint256)
     {
+        if (_shareAmount == 0) {
+            return 0;
+        }
+        if (_priceInBasisPoints == 0) {
+            revert("Price must be greater than 0");
+        }
+
         // Calculate the cost in share decimal units
         uint256 costInShareDecimals = (_shareAmount * _priceInBasisPoints) / BASIS_POINTS;
 
