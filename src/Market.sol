@@ -78,10 +78,34 @@ contract Market {
     }
 
     /**
+     * @notice Convert share amounts with price to payment token amounts
+     * @param _shareAmount The amount of shares (18 decimals)
+     * @param _priceInBasisPoints The price in basis points (0-10000) or the chance of the outcome happening (0 - 100.00%)
+     * @return The amount of payment tokens (paymentTokenDecimals decimals)
+     */
+    function calculatePaymentTokens(uint256 _shareAmount, uint256 _priceInBasisPoints)
+        internal
+        view
+        returns (uint256)
+    {
+        // 1. Calculate the cost in share decimal units
+        uint256 costInShareDecimals = (_shareAmount * _priceInBasisPoints) / BASIS_POINTS;
+
+        // 2. Convert to payment token decimals
+        if (SHARE_DECIMALS > paymentTokenDecimals) {
+            return costInShareDecimals / (10 ** (SHARE_DECIMALS - paymentTokenDecimals));
+        } else if (SHARE_DECIMALS < paymentTokenDecimals) {
+            return costInShareDecimals * (10 ** (paymentTokenDecimals - SHARE_DECIMALS));
+        }
+
+        return costInShareDecimals;
+    }
+
+    /**
      * @notice Create an order to buy or sell shares of a market outcome.
      * @param _side The side of the order (buy or sell)
      * @param _outcome The outcome of the market (yes or no)
-     * @param _amount The amount of shares to buy or sell (in payment token decimal units)
+     * @param _amount The amount of shares to buy or sell (in share units with 18 decimals)
      * @param _price The price of the shares in basis points (0-10000, where 10000 = 100%)
      */
     function createOrder(OrderSide _side, MarketOutcome _outcome, uint256 _amount, uint256 _price) public {
@@ -96,15 +120,10 @@ contract Market {
             revert("Price must be between 1 and 10000 basis points");
         }
 
-        // Convert share amount to payment token amount while adjusting for decimal difference
-        uint256 totalCost = (_amount * _price) / BASIS_POINTS;
-        if (SHARE_DECIMALS > paymentTokenDecimals) {
-            totalCost = totalCost / (10 ** (SHARE_DECIMALS - paymentTokenDecimals));
-        } else if (SHARE_DECIMALS < paymentTokenDecimals) {
-            totalCost = totalCost * (10 ** (paymentTokenDecimals - SHARE_DECIMALS));
-        }
-
         if (_side == OrderSide.BUY) {
+            // Calculate total cost in payment tokens
+            uint256 totalCost = calculatePaymentTokens(_amount, _price);
+
             // Check if buyer has enough token balance
             if (paymentToken.balanceOf(msg.sender) < totalCost) {
                 revert("Insufficient balance");
@@ -147,7 +166,7 @@ contract Market {
 
         // Return escrowed funds if it was a buy order
         if (order.side == OrderSide.BUY) {
-            uint256 refundAmount = (order.amount * order.price) / BASIS_POINTS;
+            uint256 refundAmount = calculatePaymentTokens(order.amount, order.price);
             paymentToken.transfer(msg.sender, refundAmount);
         }
 
@@ -222,7 +241,7 @@ contract Market {
             }
 
             // Transfer payment to seller using seller's price
-            uint256 payment = (minAmount * order2.price) / BASIS_POINTS;
+            uint256 payment = calculatePaymentTokens(minAmount, order2.price);
             paymentToken.transfer(order2.user, payment);
 
             // Transfer shares
@@ -238,7 +257,7 @@ contract Market {
                 // Refund excess to buyer if price difference and order is filled
                 uint256 excessPrice = order1.price - order2.price;
                 if (excessPrice > 0) {
-                    uint256 refund = (minAmount * excessPrice) / BASIS_POINTS;
+                    uint256 refund = calculatePaymentTokens(minAmount, excessPrice);
                     if (refund > 0) {
                         paymentToken.transfer(order1.user, refund);
                     }
@@ -251,7 +270,7 @@ contract Market {
                 // Refund excess to buyer if price difference and order is filled
                 uint256 excessPrice = order1.price - order2.price;
                 if (excessPrice > 0) {
-                    uint256 refund = (minAmount * excessPrice) / BASIS_POINTS;
+                    uint256 refund = calculatePaymentTokens(minAmount, excessPrice);
                     if (refund > 0) {
                         paymentToken.transfer(order1.user, refund);
                     }
@@ -338,7 +357,8 @@ contract Market {
         shares[msg.sender][MarketOutcome.YES] = 0;
         shares[msg.sender][MarketOutcome.NO] = 0;
 
-        // Winning shares are redeemed 1:1 for payment tokens
-        paymentToken.transfer(msg.sender, winningShares);
+        // Winning shares are redeemed 1:1 (100% price)
+        uint256 payout = calculatePaymentTokens(winningShares, BASIS_POINTS);
+        paymentToken.transfer(msg.sender, payout);
     }
 }
