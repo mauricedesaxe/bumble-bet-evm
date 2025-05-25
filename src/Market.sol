@@ -54,12 +54,16 @@ contract Market {
     bool public resolved;
     MarketOutcome public outcome;
 
+    uint8 public immutable paymentTokenDecimals;
+    uint256 public constant SHARE_DECIMALS = 18;
+
     // TODO: events
 
     constructor(string memory _name, address _paymentToken) {
         name = _name;
         owner = msg.sender;
         paymentToken = IERC20(_paymentToken);
+        paymentTokenDecimals = IERC20(_paymentToken).decimals();
     }
 
     /**
@@ -77,7 +81,7 @@ contract Market {
      * @notice Create an order to buy or sell shares of a market outcome.
      * @param _side The side of the order (buy or sell)
      * @param _outcome The outcome of the market (yes or no)
-     * @param _amount The amount of shares to buy or sell (in share units with 18 decimals)
+     * @param _amount The amount of shares to buy or sell (in payment token decimal units)
      * @param _price The price of the shares in basis points (0-10000, where 10000 = 100%)
      */
     function createOrder(OrderSide _side, MarketOutcome _outcome, uint256 _amount, uint256 _price) public {
@@ -92,10 +96,13 @@ contract Market {
             revert("Price must be between 1 and 10000 basis points");
         }
 
-        // Calculate total cost in payment tokens
-        // totalCost = (amount * price) / BASIS_POINTS
-        // This gives us the cost in payment tokens with proper decimals
+        // Convert share amount to payment token amount while adjusting for decimal difference
         uint256 totalCost = (_amount * _price) / BASIS_POINTS;
+        if (SHARE_DECIMALS > paymentTokenDecimals) {
+            totalCost = totalCost / (10 ** (SHARE_DECIMALS - paymentTokenDecimals));
+        } else if (SHARE_DECIMALS < paymentTokenDecimals) {
+            totalCost = totalCost * (10 ** (paymentTokenDecimals - SHARE_DECIMALS));
+        }
 
         if (_side == OrderSide.BUY) {
             // Check if buyer has enough token balance
