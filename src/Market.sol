@@ -44,6 +44,8 @@ contract Market {
     address public owner;
     IERC20 public paymentToken;
 
+    uint256 public immutable tokenDecimals;
+
     mapping(address => uint256) public orderCount;
     mapping(address => mapping(uint256 => Order)) public orders;
     mapping(address => mapping(MarketOutcome => uint256)) public shares;
@@ -54,6 +56,7 @@ contract Market {
         name = _name;
         owner = msg.sender;
         paymentToken = IERC20(_paymentToken);
+        tokenDecimals = paymentToken.decimals();
     }
 
     /**
