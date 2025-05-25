@@ -11,7 +11,7 @@ contract MarketTest is Test {
     Market public market;
 
     function setUp() public {
-        token = IERC20(address(new MockERC20("Token", "TKN")));
+        token = IERC20(address(new MockERC20("Token", "TKN", 6)));
         market = new Market("Market", address(token));
 
         // Set up token balances

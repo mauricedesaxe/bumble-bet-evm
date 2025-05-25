@@ -12,9 +12,10 @@ contract MockERC20 is IERC20 {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
-    constructor(string memory _name, string memory _symbol) {
+    constructor(string memory _name, string memory _symbol, uint8 _decimals) {
         name = _name;
         symbol = _symbol;
+        decimals = _decimals;
     }
 
     function mint(address to, uint256 amount) public {

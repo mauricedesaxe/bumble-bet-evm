@@ -15,7 +15,7 @@ contract MatchOrdersTest is Test {
     address carol = address(0xCC);
 
     function setUp() public {
-        token = IERC20(address(new MockERC20("Token", "TKN")));
+        token = IERC20(address(new MockERC20("Token", "TKN", 6)));
         market = new Market("TestMarket", address(token));
 
         // Set up balances
