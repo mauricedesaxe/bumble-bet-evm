@@ -48,6 +48,8 @@ contract Market {
     mapping(address => mapping(uint256 => Order)) public orders;
     mapping(address => mapping(MarketOutcome => uint256)) public shares;
 
+    // TODO: events
+
     constructor(string memory _name, address _paymentToken) {
         name = _name;
         owner = msg.sender;
@@ -275,4 +277,6 @@ contract Market {
             revert("Invalid order");
         }
     }
+
+    // TODO: market resolution
 }
