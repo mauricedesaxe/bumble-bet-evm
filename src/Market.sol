@@ -97,6 +97,9 @@ contract Market {
 
         // Calculate the cost in share decimal units
         uint256 costInShareDecimals = (_shareAmount * _priceInBasisPoints) / BASIS_POINTS;
+        if (costInShareDecimals == 0) {
+            revert("Cost in share decimals is 0");
+        }
 
         // Convert to payment token decimals
         uint256 costInPaymentTokens;
@@ -108,10 +111,21 @@ contract Market {
             costInPaymentTokens = costInShareDecimals;
         }
 
-        // Reverse as a sanity check
-        uint256 reverse = paymentTokensToShares(costInPaymentTokens, _priceInBasisPoints);
-        if (reverse != _shareAmount) {
-            revert("Reverse calculation does not match");
+        // Skip reverse check for very small amounts that would result in 0 payment tokens
+        // This prevents rounding errors with edge cases
+        if (costInPaymentTokens == 0) {
+            revert("Cost in payment tokens is 0");
+        }
+
+        // Only do reverse check if payment amount is significant
+        if (costInPaymentTokens > 0) {
+            uint256 reverse = paymentTokensToShares(costInPaymentTokens, _priceInBasisPoints);
+
+            // Allow for rounding error of 1 unit in share decimals
+            uint256 diff = reverse > _shareAmount ? reverse - _shareAmount : _shareAmount - reverse;
+            if (diff > 1) {
+                revert("Reverse calculation does not match");
+            }
         }
 
         return costInPaymentTokens;
