@@ -48,6 +48,9 @@ contract Market {
     mapping(address => mapping(uint256 => Order)) public orders;
     mapping(address => mapping(MarketOutcome => uint256)) public shares;
 
+    bool public resolved;
+    MarketOutcome public outcome;
+
     // TODO: events
 
     constructor(string memory _name, address _paymentToken) {
@@ -75,6 +78,10 @@ contract Market {
      * @param _price The price of the shares
      */
     function createOrder(OrderSide _side, MarketOutcome _outcome, uint256 _amount, uint256 _price) public {
+        if (resolved) {
+            revert("Market is already resolved");
+        }
+
         if (_amount == 0) {
             revert("Amount must be greater than zero");
         }
@@ -158,6 +165,10 @@ contract Market {
      * @param _orderId2 The id of the second order
      */
     function matchOrders(address _user1, address _user2, uint256 _orderId1, uint256 _orderId2) public {
+        if (resolved) {
+            revert("Market is already resolved");
+        }
+
         if (msg.sender != owner) {
             revert("Only the owner can match orders");
         }
@@ -278,5 +289,41 @@ contract Market {
         }
     }
 
-    // TODO: market resolution
+    /**
+     * @notice Resolve the market.
+     * @dev This is called by the owner to resolve the market.
+     * @param _outcome The outcome of the market (yes or no)
+     */
+    function resolveMarket(MarketOutcome _outcome) public {
+        if (resolved) {
+            revert("Market is already resolved");
+        }
+
+        if (msg.sender != owner) {
+            revert("Only the owner can resolve the market");
+        }
+
+        resolved = true;
+        outcome = _outcome;
+    }
+
+    /**
+     * @notice Claim the outcome of the market.
+     * @dev This is called by the user to claim their shares after the market is resolved.
+     */
+    function claim() public {
+        if (!resolved) {
+            revert("Market is not resolved");
+        }
+
+        uint256 winningShares = shares[msg.sender][outcome];
+        if (winningShares == 0) {
+            revert("No shares to claim");
+        }
+
+        shares[msg.sender][MarketOutcome.YES] = 0;
+        shares[msg.sender][MarketOutcome.NO] = 0;
+
+        paymentToken.transfer(msg.sender, winningShares);
+    }
 }
