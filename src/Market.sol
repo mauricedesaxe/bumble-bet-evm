@@ -29,6 +29,14 @@ struct Order {
     OrderStatus status;
 }
 
+/**
+ * @title Market
+ * @notice This contract is a simple market for buying and selling shares of a market outcome.
+ * @notice We only handle limit orders for now because it's simpler. If you need market orders,
+ * @notice you can look up the state on-chain and create an order with a price and size that matches
+ * @notice what is in the orderbook. That will be immediately fill-able by `matchOrders`.
+ * @dev This contract is not audited, use at your own risk.
+ */
 contract Market {
     using OrderUtils for Order;
 
@@ -46,6 +54,10 @@ contract Market {
         paymentToken = IERC20(_paymentToken);
     }
 
+    /**
+     * @notice Set the name of the market if you need to change it later.
+     * @param _name The new name of the market
+     */
     function setName(string memory _name) public {
         if (msg.sender != owner) {
             revert("Only the owner can set the name");
@@ -53,6 +65,13 @@ contract Market {
         name = _name;
     }
 
+    /**
+     * @notice Create an order to buy or sell shares of a market outcome.
+     * @param _side The side of the order (buy or sell)
+     * @param _outcome The outcome of the market (yes or no)
+     * @param _amount The amount of shares to buy or sell
+     * @param _price The price of the shares
+     */
     function createOrder(OrderSide _side, MarketOutcome _outcome, uint256 _amount, uint256 _price) public {
         if (_amount == 0) {
             revert("Amount must be greater than zero");
@@ -89,6 +108,11 @@ contract Market {
         });
     }
 
+    /**
+     * @notice Cancel an order.
+     * @dev If the order is one the buy side, the user will get their payment back.
+     * @param _orderId The id of the order to cancel
+     */
     function cancelOrder(uint256 _orderId) public {
         Order storage order = orders[msg.sender][_orderId];
         if (order.user == address(0)) {
@@ -108,6 +132,29 @@ contract Market {
         order.status = OrderStatus.CANCELLED;
     }
 
+    /**
+     * @notice Attempt to match two orders.
+     * @dev This is possibly the single most important function in the contract.
+     * @dev It is called by the owner to match two orders.
+     *
+     * Execution Flow:
+     * 1. Validate caller is owner and users are different
+     * 2. Load both orders and verify they exist and are PENDING
+     * 3. Calculate fill amount (minimum of both order amounts)
+     * 4. Route to appropriate matching logic:
+     *    - BUY-SELL: Requires order1=BUY, order2=SELL with same outcome (YES-YES or NO-NO).
+     *      Validates seller has shares, buyer price >= seller price, transfers payment to seller,
+     *      transfers shares to buyer, refunds excess escrow to buyer if price difference exists.
+     *    - BUY-BUY: Requires opposite outcomes (order1=YES, order2=NO) and prices must sum to 100.
+     *      Creates new shares for both users (both have already paid into escrow when creating orders).
+     * 5. Update order amounts and set status to FILLED if fully matched
+     * 6. Handle partial fills by keeping remaining amounts in escrow for future matches
+     *
+     * @param _user1 The user of the first order (buyer in BUY-SELL scenarios)
+     * @param _user2 The user of the second order (seller in BUY-SELL scenarios)
+     * @param _orderId1 The id of the first order
+     * @param _orderId2 The id of the second order
+     */
     function matchOrders(address _user1, address _user2, uint256 _orderId1, uint256 _orderId2) public {
         if (msg.sender != owner) {
             revert("Only the owner can match orders");
