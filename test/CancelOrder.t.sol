@@ -45,8 +45,12 @@ contract MarketTest is Test {
     // Fuzz test with different order parameters
     function testFuzz_Market_CancelOrder(uint256 amount, uint256 price) public {
         // Limit values to reasonable ranges to avoid overflow and insufficient balance
-        price = bound(price, 1, 99); // 100%
-        amount = bound(amount, 1, 100 ether * 100 / price);
+        price = bound(price, 1, 99);
+        // Calculate max amount based on available balance and price
+        // We have 100 * 10^18 tokens, need to ensure amount * price * 10^6 / 100 <= balance
+        // So amount <= balance * 100 / (price * 10^6)
+        uint256 maxAmount = (token.balanceOf(address(this)) * 100) / (price * 10 ** token.decimals());
+        amount = bound(amount, 1, maxAmount);
 
         uint256 balanceBefore = token.balanceOf(address(this));
         uint256 marketBalanceBefore = token.balanceOf(address(market));

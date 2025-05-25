@@ -376,10 +376,15 @@ contract MatchOrdersTest is Test {
         public
     {
         // Limit values to reasonable ranges to avoid overflow and insufficient balance
-        yesPrice = bound(yesPrice, 1, 99); // 100%
+        yesPrice = bound(yesPrice, 1, 99);
         uint256 noPrice = 100 - yesPrice;
-        amount1 = bound(amount1, 1, 100 ether * 100 / yesPrice);
-        amount2 = bound(amount2, 1, 100 ether * 100 / noPrice);
+        // Calculate max amount based on available balance and price
+        // We have 100 * 10^18 tokens, need to ensure amount * price * 10^6 / 100 <= balance
+        // So amount <= balance * 100 / (price * 10^6)
+        uint256 maxAmount1 = (token.balanceOf(address(this)) * 100) / (yesPrice * 10 ** token.decimals());
+        uint256 maxAmount2 = (token.balanceOf(address(this)) * 100) / (noPrice * 10 ** token.decimals());
+        amount1 = bound(amount1, 1, maxAmount1);
+        amount2 = bound(amount2, 1, maxAmount2);
 
         // Skip zero values
         vm.assume(amount1 > 0);
