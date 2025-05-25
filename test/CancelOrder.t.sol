@@ -86,9 +86,11 @@ contract MarketTest is Test {
         uint256 balanceAfter = token.balanceOf(address(this));
         uint256 marketBalanceAfter = token.balanceOf(address(market));
 
-        // Order 2 is still pending, so its cost (200 * 75 / 100 = 150) should still be in escrow
-        uint256 expectedBalance = balanceBefore - (200 * 75 / 100);
-        uint256 expectedMarketBalance = marketBalanceBefore + (200 * 75 / 100);
+        // Order 2 is still pending, so its cost should still be in escrow
+        // Using the same calculation as the contract: shares * price * 10^decimals / 100
+        uint256 order2Cost = (200 * 75 * 10 ** token.decimals()) / 100;
+        uint256 expectedBalance = balanceBefore - order2Cost;
+        uint256 expectedMarketBalance = marketBalanceBefore + order2Cost;
 
         assertEq(balanceAfter, expectedBalance);
         assertEq(marketBalanceAfter, expectedMarketBalance);

@@ -40,8 +40,10 @@ contract MarketTest is Test {
         uint256 balanceAfter = token.balanceOf(address(this));
         uint256 marketBalanceAfter = token.balanceOf(address(market));
 
-        assertEq(balanceAfter, balanceBefore - amount * price / 100);
-        assertEq(marketBalanceAfter, marketBalanceBefore + amount * price / 100);
+        // Use the same calculation as the contract
+        uint256 expectedCost = (amount * price * 10 ** token.decimals()) / 100;
+        assertEq(balanceAfter, balanceBefore - expectedCost);
+        assertEq(marketBalanceAfter, marketBalanceBefore + expectedCost);
 
         (address user, uint256 orderAmount, uint256 orderPrice, OrderSide side, MarketOutcome yesNo, OrderStatus status)
         = market.orders(address(this), 1);
@@ -73,8 +75,10 @@ contract MarketTest is Test {
         uint256 balanceAfter = token.balanceOf(address(this));
         uint256 marketBalanceAfter = token.balanceOf(address(market));
 
-        assertEq(balanceAfter, balanceBefore - amount * price / 100);
-        assertEq(marketBalanceAfter, marketBalanceBefore + amount * price / 100);
+        // Use the same calculation as the contract
+        uint256 expectedCost = (amount * price * 10 ** token.decimals()) / 100;
+        assertEq(balanceAfter, balanceBefore - expectedCost);
+        assertEq(marketBalanceAfter, marketBalanceBefore + expectedCost);
 
         (address user, uint256 orderAmount, uint256 orderPrice, OrderSide side, MarketOutcome yesNo, OrderStatus status)
         = market.orders(address(this), 1);
@@ -106,8 +110,10 @@ contract MarketTest is Test {
         uint256 balanceAfter = token.balanceOf(address(this));
         uint256 marketBalanceAfter = token.balanceOf(address(market));
 
-        assertEq(balanceAfter, balanceBefore - amount * price / 100);
-        assertEq(marketBalanceAfter, marketBalanceBefore + amount * price / 100);
+        // Use the same calculation as the contract
+        uint256 expectedCost = (amount * price * 10 ** token.decimals()) / 100;
+        assertEq(balanceAfter, balanceBefore - expectedCost);
+        assertEq(marketBalanceAfter, marketBalanceBefore + expectedCost);
 
         (address user, uint256 orderAmount, uint256 orderPrice, OrderSide side, MarketOutcome yesNo, OrderStatus status)
         = market.orders(address(this), 1);
@@ -139,8 +145,10 @@ contract MarketTest is Test {
         uint256 balanceAfter = token.balanceOf(address(this));
         uint256 marketBalanceAfter = token.balanceOf(address(market));
 
-        assertEq(balanceAfter, balanceBefore - amount * price / 100);
-        assertEq(marketBalanceAfter, marketBalanceBefore + amount * price / 100);
+        // Use the same calculation as the contract
+        uint256 expectedCost = (amount * price * 10 ** token.decimals()) / 100;
+        assertEq(balanceAfter, balanceBefore - expectedCost);
+        assertEq(marketBalanceAfter, marketBalanceBefore + expectedCost);
     }
 
     // SELL-YES-LIMIT (should revert)

@@ -683,12 +683,12 @@ contract MatchOrdersTest is Test {
         uint256 bobBalanceBefore = token.balanceOf(bob);
         uint256 marketBalanceBefore = token.balanceOf(address(market));
 
-        // Alice creates a BUY order for YES at price 40 (cost: 100 * 40 / 100 = 40)
+        // Alice creates a BUY order for YES at price 40
         vm.prank(alice);
         market.createOrder(OrderSide.BUY, MarketOutcome.YES, 100, 40);
         vm.stopPrank();
 
-        // Bob creates a BUY order for NO at price 60 (cost: 100 * 60 / 100 = 60)
+        // Bob creates a BUY order for NO at price 60
         vm.prank(bob);
         market.createOrder(OrderSide.BUY, MarketOutcome.NO, 100, 60);
         vm.stopPrank();
@@ -700,14 +700,18 @@ contract MatchOrdersTest is Test {
         uint256 bobBalanceAfter = token.balanceOf(bob);
         uint256 marketBalanceAfter = token.balanceOf(address(market));
 
-        // Alice should have paid 40 tokens
-        assertEq(aliceBalanceAfter, aliceBalanceBefore - 40, "Alice should have paid 40 tokens");
+        // Calculate costs using the same formula as the contract
+        uint256 aliceCost = (100 * 40 * 10 ** token.decimals()) / 100;
+        uint256 bobCost = (100 * 60 * 10 ** token.decimals()) / 100;
 
-        // Bob should have paid 60 tokens
-        assertEq(bobBalanceAfter, bobBalanceBefore - 60, "Bob should have paid 60 tokens");
+        // Alice should have paid aliceCost tokens
+        assertEq(aliceBalanceAfter, aliceBalanceBefore - aliceCost, "Alice should have paid 40 tokens");
 
-        // Market should hold 100 tokens total (40 + 60)
-        assertEq(marketBalanceAfter, marketBalanceBefore + 100, "Market should hold 100 tokens");
+        // Bob should have paid bobCost tokens
+        assertEq(bobBalanceAfter, bobBalanceBefore - bobCost, "Bob should have paid 60 tokens");
+
+        // Market should hold total tokens
+        assertEq(marketBalanceAfter, marketBalanceBefore + aliceCost + bobCost, "Market should hold 100 tokens");
 
         // Verify shares were created
         assertEq(market.shares(alice, MarketOutcome.YES), 100);
@@ -731,7 +735,7 @@ contract MatchOrdersTest is Test {
         uint256 bobBalanceBefore = token.balanceOf(bob);
         uint256 marketBalanceBefore = token.balanceOf(address(market));
 
-        // Alice creates a BUY order for YES at price 60 (cost: 100 * 60 / 100 = 60)
+        // Alice creates a BUY order for YES at price 60
         vm.prank(alice);
         market.createOrder(OrderSide.BUY, MarketOutcome.YES, 100, 60);
         vm.stopPrank();
@@ -748,14 +752,18 @@ contract MatchOrdersTest is Test {
         uint256 bobBalanceAfter = token.balanceOf(bob);
         uint256 marketBalanceAfter = token.balanceOf(address(market));
 
-        // Alice should have net payment of 50 (paid 60, got 10 refund)
-        assertEq(aliceBalanceAfter, aliceBalanceBefore - 50, "Alice should have net payment of 50 tokens");
+        // Calculate amounts using the same formula as the contract
+        uint256 aliceEscrow = (100 * 60 * 10 ** token.decimals()) / 100;
+        uint256 sellerPayment = (100 * 50 * 10 ** token.decimals()) / 100;
+        uint256 refund = (100 * (60 - 50) * 10 ** token.decimals()) / 100;
 
-        // Bob should have received 50 tokens
-        assertEq(bobBalanceAfter, bobBalanceBefore + 50, "Bob should have received 50 tokens");
+        // Alice should have net payment of sellerPayment (paid aliceEscrow, got refund)
+        assertEq(aliceBalanceAfter, aliceBalanceBefore - sellerPayment, "Alice should have net payment of 50 tokens");
 
-        // Market balance: was marketBalanceBefore, Alice added 60, then market paid out 50 to Bob + 10 refund to Alice
-        // Net change: +60 -50 -10 = 0
+        // Bob should have received sellerPayment tokens
+        assertEq(bobBalanceAfter, bobBalanceBefore + sellerPayment, "Bob should have received 50 tokens");
+
+        // Market balance should be unchanged
         assertEq(marketBalanceAfter, marketBalanceBefore, "Market balance should be unchanged");
 
         // Verify shares transferred
@@ -780,7 +788,7 @@ contract MatchOrdersTest is Test {
         uint256 bobBalanceBefore = token.balanceOf(bob);
         uint256 marketBalanceBefore = token.balanceOf(address(market));
 
-        // Alice creates a BUY order for 100 YES at price 70 (cost: 100 * 70 / 100 = 70)
+        // Alice creates a BUY order for 100 YES at price 70
         vm.prank(alice);
         market.createOrder(OrderSide.BUY, MarketOutcome.YES, 100, 70);
         vm.stopPrank();
@@ -797,15 +805,22 @@ contract MatchOrdersTest is Test {
         uint256 bobBalanceAfter = token.balanceOf(bob);
         uint256 marketBalanceAfter = token.balanceOf(address(market));
 
-        // Alice paid 70 total when creating order
-        assertEq(aliceBalanceAfter, aliceBalanceBefore - 70, "Alice should have paid 70 tokens total");
+        // Calculate amounts using the same formula as the contract
+        uint256 aliceEscrow = (100 * 70 * 10 ** token.decimals()) / 100;
+        uint256 bobPayment = (60 * 50 * 10 ** token.decimals()) / 100;
 
-        // Bob should have received 30 tokens (60 * 50 / 100)
-        assertEq(bobBalanceAfter, bobBalanceBefore + 30, "Bob should have received 30 tokens");
+        // Alice paid aliceEscrow total when creating order
+        assertEq(aliceBalanceAfter, aliceBalanceBefore - aliceEscrow, "Alice should have paid 70 tokens total");
 
-        // Market: Alice added 70, paid out 30 to Bob, NO REFUND to Alice since order is still PENDING
-        // Net change: +70 -30 = +40
-        assertEq(marketBalanceAfter, marketBalanceBefore + 40, "Market should hold Alice's full remaining escrow");
+        // Bob should have received bobPayment tokens
+        assertEq(bobBalanceAfter, bobBalanceBefore + bobPayment, "Bob should have received 30 tokens");
+
+        // Market: Alice added aliceEscrow, paid out bobPayment to Bob, NO REFUND to Alice since order is still PENDING
+        assertEq(
+            marketBalanceAfter,
+            marketBalanceBefore + aliceEscrow - bobPayment,
+            "Market should hold Alice's full remaining escrow"
+        );
 
         // Verify partial fill
         (, uint256 remaining,,,, OrderStatus status) = market.orders(alice, 1);
@@ -829,7 +844,7 @@ contract MatchOrdersTest is Test {
         uint256 aliceBalanceBefore = token.balanceOf(alice);
         uint256 bobBalanceBefore = token.balanceOf(bob);
 
-        // Alice creates a BUY order for YES at high price 90 (cost: 100 * 90 / 100 = 90)
+        // Alice creates a BUY order for YES at high price 90
         vm.prank(alice);
         market.createOrder(OrderSide.BUY, MarketOutcome.YES, 100, 90);
         vm.stopPrank();
@@ -845,12 +860,14 @@ contract MatchOrdersTest is Test {
         uint256 aliceBalanceAfter = token.balanceOf(alice);
         uint256 bobBalanceAfter = token.balanceOf(bob);
 
-        // Alice should pay seller's price (30) and get refund (60)
-        // Net: Alice paid 90, got back 60, so net payment = 30
-        assertEq(aliceBalanceAfter, aliceBalanceBefore - 30, "Alice should have net payment of 30");
+        // Calculate amounts using the same formula as the contract
+        uint256 sellerPayment = (100 * 30 * 10 ** token.decimals()) / 100;
 
-        // Bob should receive 30 tokens
-        assertEq(bobBalanceAfter, bobBalanceBefore + 30, "Bob should have received 30 tokens");
+        // Alice should pay seller's price (30) - she paid 90 upfront, gets 60 refund
+        assertEq(aliceBalanceAfter, aliceBalanceBefore - sellerPayment, "Alice should have net payment of 30");
+
+        // Bob should receive sellerPayment tokens
+        assertEq(bobBalanceAfter, bobBalanceBefore + sellerPayment, "Bob should have received 30 tokens");
     }
 
     function test_MultipleMatches_CumulativeBalances() public {
@@ -886,13 +903,21 @@ contract MatchOrdersTest is Test {
         uint256 bobBalanceAfter = token.balanceOf(bob);
         uint256 charlieBalanceAfter = token.balanceOf(charlie);
 
-        // Alice: paid 20 (50*40/100), received 13 (30*45/100), net: -7
-        assertEq(aliceBalanceAfter, aliceBalanceBefore - 20 + 13, "Alice net: paid 20, received 13");
+        // Calculate amounts using the same formula as the contract
+        uint256 aliceFirstCost = (50 * 40 * 10 ** token.decimals()) / 100;
+        uint256 aliceReceived = (30 * 45 * 10 ** token.decimals()) / 100;
+        uint256 bobCost = (50 * 60 * 10 ** token.decimals()) / 100;
+        uint256 charlieNetCost = (30 * 45 * 10 ** token.decimals()) / 100; // pays seller's price after refund
 
-        // Bob: paid 30 (50*60/100)
-        assertEq(bobBalanceAfter, bobBalanceBefore - 30, "Bob should have paid 30");
+        // Alice: paid aliceFirstCost, received aliceReceived
+        assertEq(
+            aliceBalanceAfter, aliceBalanceBefore - aliceFirstCost + aliceReceived, "Alice net: paid 20, received 13.5"
+        );
 
-        // Charlie: paid 16 (30*55/100), got 3 refund (30*(55-45)/100), net: -13
-        assertEq(charlieBalanceAfter, charlieBalanceBefore - 13, "Charlie net payment should be 13");
+        // Bob: paid bobCost
+        assertEq(bobBalanceAfter, bobBalanceBefore - bobCost, "Bob should have paid 30");
+
+        // Charlie: net payment is seller's price (paid 55, got 10 refund)
+        assertEq(charlieBalanceAfter, charlieBalanceBefore - charlieNetCost, "Charlie net payment should be 13.5");
     }
 }
