@@ -50,6 +50,8 @@ contract Market {
     mapping(address => mapping(uint256 => Order)) public orders;
     mapping(address => mapping(MarketOutcome => uint256)) public shares;
 
+    bool public resolved;
+
     // TODO: events
 
     constructor(string memory _name, address _paymentToken) {
