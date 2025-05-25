@@ -55,7 +55,7 @@ contract Market {
     MarketOutcome public outcome;
 
     uint8 public immutable paymentTokenDecimals;
-    uint256 public constant SHARE_DECIMALS = 18;
+    uint256 public constant SHARE_DECIMALS = 2;
 
     // TODO: events
 
@@ -79,7 +79,7 @@ contract Market {
 
     /**
      * @notice Convert share amounts with price to payment token amounts
-     * @param _shareAmount The amount of shares (18 decimals)
+     * @param _shareAmount The amount of shares (2 decimals - 100 = 1 full share)
      * @param _priceInBasisPoints The price in basis points (0-10000) or the chance of the outcome happening (0 - 100.00%)
      * @return The amount of payment tokens (paymentTokenDecimals decimals)
      */
@@ -135,7 +135,7 @@ contract Market {
      * @notice Convert payment token amounts to share amounts given a price
      * @param _paymentTokenAmount The amount of payment tokens (paymentTokenDecimals decimals)
      * @param _priceInBasisPoints The price in basis points (0-10000)
-     * @return The amount of shares (18 decimals)
+     * @return The amount of shares (2 decimals - 100 = 1 full share)
      */
     function paymentTokensToShares(uint256 _paymentTokenAmount, uint256 _priceInBasisPoints)
         internal
@@ -162,7 +162,7 @@ contract Market {
      * @notice Create an order to buy or sell shares of a market outcome.
      * @param _side The side of the order (buy or sell)
      * @param _outcome The outcome of the market (yes or no)
-     * @param _amount The amount of shares to buy or sell (in share units with 18 decimals)
+     * @param _amount The amount of shares to buy or sell (in share units with 2 decimals - 100 = 1 full share)
      * @param _price The price of the shares in basis points (0-10000, where 10000 = 100%)
      */
     function createOrder(OrderSide _side, MarketOutcome _outcome, uint256 _amount, uint256 _price) public {
