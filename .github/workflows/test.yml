@@ -26,20 +26,20 @@ jobs:
           version: nightly
 
       - name: Show Forge version
-        run: |
-          forge --version
+        run: forge --version
+        working-directory: ./smart-contracts
 
       - name: Run Forge fmt
-        run: |
-          forge fmt --check
+        run: forge fmt --check
+        working-directory: ./smart-contracts
         id: fmt
 
       - name: Run Forge build
-        run: |
-          forge build --sizes
+        run: forge build --sizes
+        working-directory: ./smart-contracts
         id: build
 
       - name: Run Forge tests
-        run: |
-          forge test -vvv
+        run: forge test -vvv
+        working-directory: ./smart-contracts
         id: test
