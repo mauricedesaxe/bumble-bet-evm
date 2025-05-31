@@ -198,10 +198,6 @@ contract Market {
             revert("Market is resolved");
         }
 
-        if (msg.sender != owner) {
-            revert("Only the owner can match orders");
-        }
-
         if (_user1 == _user2) {
             revert("Cannot match orders for the same user");
         }

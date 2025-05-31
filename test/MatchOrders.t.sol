@@ -240,10 +240,6 @@ contract MatchOrdersTest is Test {
         assertEq(market.shares(bob, MarketOutcome.NO), 80, "Bob should have 80 NO shares");
     }
 
-    /*────────────────────────
-        ► FAILURE TESTS
-    ────────────────────────*/
-
     function test_NonOwnerMatch() public {
         // Alice creates a BUY order for 100 YES
         vm.prank(alice);
@@ -255,11 +251,22 @@ contract MatchOrdersTest is Test {
         market.createOrder(OrderSide.BUY, MarketOutcome.NO, 100, 50);
         vm.stopPrank();
 
-        // Non-owner tries to match
+        // Non-owner tries to match and it works (as expected)
         vm.prank(carol);
-        vm.expectRevert("Only the owner can match orders");
         market.matchOrders(alice, bob, 1, 1);
+
+        // Verify orders are filled and shares are created
+        (,,,,, OrderStatus status1) = market.orders(alice, 1);
+        (,,,,, OrderStatus status2) = market.orders(bob, 1);
+        assertEq(uint256(status1), uint256(OrderStatus.FILLED));
+        assertEq(uint256(status2), uint256(OrderStatus.FILLED));
+        assertEq(market.shares(alice, MarketOutcome.YES), 100);
+        assertEq(market.shares(bob, MarketOutcome.NO), 100);
     }
+
+    /*────────────────────────
+        ► FAILURE TESTS
+    ────────────────────────*/
 
     function test_SameUserMatch() public {
         // Alice creates a BUY order for 100 YES
