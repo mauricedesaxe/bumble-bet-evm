@@ -53,7 +53,43 @@ contract Market {
     bool public resolved;
     MarketOutcome public outcome;
 
-    // TODO: events
+    event OrderCreated(
+        address indexed user,
+        uint256 indexed orderId,
+        OrderSide side,
+        MarketOutcome outcome,
+        uint256 shares,
+        uint256 price
+    );
+
+    event OrdersCancelled(
+        address indexed user,
+        uint256 indexed orderId,
+        OrderSide side,
+        MarketOutcome outcome,
+        uint256 shares,
+        uint256 price
+    );
+
+    event OrdersMatched(
+        address indexed user1,
+        address indexed user2,
+        uint256 indexed orderId1,
+        uint256 indexed orderId2,
+        OrderSide side1,
+        OrderSide side2,
+        MarketOutcome outcome1,
+        MarketOutcome outcome2,
+        uint256 shares1,
+        uint256 shares2,
+        uint256 price1,
+        uint256 price2,
+        uint256 matchedShares
+    );
+
+    event MarketResolved(MarketOutcome outcome);
+
+    event SharesClaimed(address indexed user, MarketOutcome outcome, uint256 shares);
 
     constructor(string memory _name, address _paymentToken) {
         name = _name;
@@ -107,6 +143,8 @@ contract Market {
             yesNo: _outcome,
             status: OrderStatus.PENDING
         });
+
+        emit OrderCreated(msg.sender, orderCount[msg.sender], _side, _outcome, _shares, _price);
     }
 
     /**
@@ -131,6 +169,8 @@ contract Market {
         }
 
         order.status = OrderStatus.CANCELLED;
+
+        emit OrdersCancelled(msg.sender, _orderId, order.side, order.yesNo, order.shares, order.price);
     }
 
     /**
@@ -275,6 +315,22 @@ contract Market {
         } else {
             revert("Invalid order");
         }
+
+        emit OrdersMatched(
+            _user1,
+            _user2,
+            _orderId1,
+            _orderId2,
+            order1.side,
+            order2.side,
+            order1.yesNo,
+            order2.yesNo,
+            order1.shares,
+            order2.shares,
+            order1.price,
+            order2.price,
+            minShares
+        );
     }
 
     /**
@@ -293,6 +349,8 @@ contract Market {
 
         resolved = true;
         outcome = _outcome;
+
+        emit MarketResolved(_outcome);
     }
 
     /**
@@ -315,6 +373,8 @@ contract Market {
             uint256 payout = winningShares * (10 ** tokenDecimals);
             paymentToken.transfer(msg.sender, payout);
         }
+
+        emit SharesClaimed(msg.sender, outcome, winningShares);
     }
 
     /**
